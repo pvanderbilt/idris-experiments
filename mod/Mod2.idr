@@ -72,6 +72,12 @@ ModInv (MkMod (S i') j') = let result = MkMod (S j') i'
 axLZ : (m : Mod (S _)) -> (ModAdd ModZ m) = m
 axLZ i = Refl
 
+{- In progress: TBD: finish ?h3
+axLR : (m : Mod (S _)) -> (ModAdd m ModZ) = m
+axLR (MkMod Z _) = Refl
+axLR (MkMod (S i') j') = ?h_3
+-}
+
 {-
     In progress
 axInvR : (m : Mod (S _)) -> (ModAdd m (ModInv m)) = ModZ
@@ -107,9 +113,10 @@ axLZ' : (i : Nat) -> {j : Nat} -> (ModAdd ModZ (MkMod i j)) = (MkMod i j)
 axLZ' i = Refl
 
 
- 
+{-
 --ModAdd' : Mod n -> Mod n -> Mod n
 --ModAdd' (MkMod ix _) (MkMod iy _) = ?ModAdd'_rhs_1
 
 ModAdd'' : (nx, ny : Nat) -> (nx = ny) -> Mod nx -> Mod ny -> Mod ny
 ModAdd'' (S (ix + jx)) (S (iy + jy)) prf (MkMod ix jx) (MkMod iy jy) = ?ModAdd''_rhs_1
+-}
