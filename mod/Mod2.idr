@@ -25,17 +25,17 @@ ModZ {j} = MkMod Z j
 -----------------------------------------------------------
 
 ModSucc : Mod n -> Mod n
-ModSucc (MkMod i Z) =      let result = MkMod Z i 
-                               goalSw = plusCommutative i Z
-                           in rewrite goalSw in result
+ModSucc (MkMod i Z) =       let result = MkMod Z i 
+                                goalSw = plusCommutative i Z
+                            in rewrite goalSw in result
 ModSucc (MkMod i' (S j')) = let result = MkMod (S i') j' 
                                 goalSw = sym $ plusSuccRightSucc i' j'
-                           in rewrite goalSw in result
+                            in rewrite goalSw in result
 
 ModPred : Mod n -> Mod n
-ModPred (MkMod Z j) =      let result = MkMod j Z 
-                               goalSw = plusCommutative Z j
-                           in rewrite goalSw in result
+ModPred (MkMod Z j) =       let result = MkMod j Z 
+                                goalSw = plusCommutative Z j
+                            in rewrite goalSw in result
 ModPred (MkMod (S i') j') = let result = MkMod i' (S j') 
                                 goalSw = plusSuccRightSucc i' j'
                             in rewrite goalSw in result
@@ -46,11 +46,7 @@ ModPred (MkMod (S i') j') = let result = MkMod i' (S j')
 
 ModAdd : Mod n -> Mod n -> Mod n
 ModAdd (MkMod Z _) y = y
-ModAdd (MkMod (S i') j') y = let xpred = MkMod i' (S j')
-                                 goalSw = plusSuccRightSucc i' j'
-                                 xpred' : Mod (S (S i' + j')) = rewrite goalSw in xpred
-                                 result = ModSucc (ModAdd (assert_smaller (MkMod (S i') j') xpred') y)
-                             in result
+ModAdd x@(MkMod (S i') j') y = ModSucc (ModAdd (assert_smaller (MkMod (S i') j') (ModPred x)) y)
 
 -----------------------------------------------------------
 --  Inverse
@@ -71,6 +67,25 @@ ModInv (MkMod (S i') j') = let result = MkMod (S j') i'
 
 axLZ : (m : Mod (S _)) -> (ModAdd ModZ m) = m
 axLZ i = Refl
+
+axInv2isId : (m : Mod (S _)) -> (ModInv (ModInv m)) = m
+axInv2isId (MkMod Z j) = Refl
+axInv2isId (MkMod (S i') j') = let
+                                 p1 : (ModInv (MkMod (S i') j') = MkMod (S j') i') = ?h1
+                               in ?axInv2isId_rhs_4
+
+{-   Replacing ?h1 by Refl gives a type mismatch:
+ 
+   Specifically:
+             Type mismatch between
+                     MkMod (S j') i'
+             and
+                     rewrite__impl (\replaced => Mod (S (S replaced)))
+                                   (plusCommutative i' j')
+                                   (MkMod (S j') i')
+
+-}
+
 
 {- In progress: TBD: finish ?h3
 axLR : (m : Mod (S _)) -> (ModAdd m ModZ) = m
