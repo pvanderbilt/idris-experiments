@@ -6,10 +6,8 @@ Languages Meetup](https://www.meetup.com/SF-Types-Theorems-and-Programming-Langu
 mostly in 2018.
 
 # Contents
-* `mod/Mod2.idr`: A start at proving that `mod n` forms a group.
-  I'm stuck at proving any non-trivial axiom.  (Aug 2018)
 
-* `project/`: Experiments about proving various things (most July 2018)
+* `projects/`: Experiments about proving various things (most July 2018)
     * `BaseOps`: Some core types for booleans as propositions and
        type refinement, including `IsTrue`.
     * `ListOps`: Reimplementation of basic list operations using
@@ -19,3 +17,8 @@ mostly in 2018.
 	  extending `Eq` for cases where it is equivalent to `Id`,
 	  with proof for  some types.
     * `Fact`: A type `Fact` that allows asserting arbitrary things.
+    * `Mod2`: A start at proving that `mod n` forms a group.
+	I'm stuck at proving any non-trivial axiom.  (Aug 2018)
+    * `Mod1`:  Some previous attempts, where I represented `mod n` by `(k : Nat ** LT k n)`
+	and `(k : Nat ** IsTrue(k<n))`.
+ 
