@@ -1,11 +1,13 @@
 # idris-experiments
-Experiments with the Idris dependently-typed programming language.
+Experiments with [Idris](http://idris-lang.org/), a dependently-typed programming language.
 
 Much of this was in response to discussions at the [SF Types, Theorems and Programming
 Languages Meetup](https://www.meetup.com/SF-Types-Theorems-and-Programming-Languages/),
 mostly in 2018.
 
 # Contents
+* `mod/Mod2.idr`: A start at proving that `mod n` forms a group.
+  I'm stuck at proving any non-trivial axiom.  (Aug 2018)
 
 * `project/`: Experiments about proving various things (most July 2018)
     * `BaseOps`: Some core types for booleans as propositions and
