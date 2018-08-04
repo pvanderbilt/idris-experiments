@@ -8,18 +8,18 @@ mostly in 2018.
 # Contents
 
 * `projects/`: Experiments about proving various things (most July 2018)
-    * `BaseOps`: Some core types for booleans as propositions and
+    * `BaseOps`: Defined some core types for booleans as propositions and
        type refinement, including `IsTrue`.
-    * `ListOps`: Reimplementation of basic list operations using
-      boolean expressions, instead of propositions.
+    * `ListOps`: Reimplemented basic list operations using
+      boolean expressions instead of propositions.
 	  Also, experimented with using preconditions and `absurd` to handle invalid cases.
-     * `EqAx`: Adding axioms to the `Eq` interface and
-	  extending `Eq` for cases where it is equivalent to `Id`,
-	  with proof for  some types.
-    * `Fact`: A type `Fact` that allows asserting arbitrary things.
-    * `Category`: Defining category theory in Idris.
-    * `Mod2`: A start at proving that `mod n` forms a group.
+    * `EqAx`: Defined an `EqAx` interface which adds axioms to the `Eq` interface.
+    	 Also defined an interface that extends `Eq` for cases where it is equivalent to `Id`.
+    	 Includes proofs for  some types.
+    * `Fact`: Defined a type `Fact` that allows asserting arbitrary things.
+    * `Category`: Defined category theory in Idris.
+    * `Mod2`: Made a start at proving that `mod n` forms a group.
 	I'm stuck at proving any non-trivial axiom.  (Aug 2018)
-    * `Mod1`:  Some previous attempts, where I represented `mod n` by `(k : Nat ** LT k n)`
+    * `Mod1`:  Some previous attempts at `mod n`, where I represented it by `(k : Nat ** LT k n)`
 	and `(k : Nat ** IsTrue(k<n))`.
  
