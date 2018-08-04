@@ -17,6 +17,7 @@ mostly in 2018.
 	  extending `Eq` for cases where it is equivalent to `Id`,
 	  with proof for  some types.
     * `Fact`: A type `Fact` that allows asserting arbitrary things.
+    * `Category`: Defining category theory in Idris.
     * `Mod2`: A start at proving that `mod n` forms a group.
 	I'm stuck at proving any non-trivial axiom.  (Aug 2018)
     * `Mod1`:  Some previous attempts, where I represented `mod n` by `(k : Nat ** LT k n)`
