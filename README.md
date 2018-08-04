@@ -5,7 +5,7 @@ Most of this was in response to discussions at the [SF Types, Theorems and Progr
 Languages Meetup](https://www.meetup.com/SF-Types-Theorems-and-Programming-Languages/),
 mostly in 2018.
 
-# Contents
+## Contents
 
 * `projects/`: Experiments about proving various things (most recent first):
     * `Mod2`: Made a start at proving that `mod n` forms a group.
