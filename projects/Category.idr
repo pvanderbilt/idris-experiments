@@ -43,16 +43,16 @@ record CategoryAx (c : Category) where
 -- Categories: (), Empty
 --------------------------------------------------------------------------------
 
-NullCat : Category
-NullCat = MkCategory 
+UnitCat : Category
+UnitCat = MkCategory 
   ()                 -- Obj : Type
   (\_,_ => ())       -- Hom    : Obj -> Obj -> Type
   (\_ => ())         -- Id  : (x : Obj) -> Hom x x
   (\_,_ => ())       -- Comp : (x, y, z : Obj) -> Hom y z -> Hom x y -> Hom x z
 
 
-NullCatAx : CategoryAx NullCat
-NullCatAx = MkCatAx 
+UnitCatAx : CategoryAx UnitCat
+UnitCatAx = MkCatAx 
   (\x,y => x=y)    -- ObjEq   : (Obj c) -> (Obj c) -> Type
   (\p,q => p=q)    -- ArrowEq : {x, y : Obj c} -> (Hom c x y) -> (Hom c x y) -> Type
   (\() => Refl)    -- Law_idL : {x, y : Obj c} -> (a : Hom c x y) -> ArrowEq a ((Id c x) >>> a)
@@ -81,8 +81,8 @@ EmptyCatAx = MkCatAx
  
 
 {-
-NullCat : Category
-NullCat = MkCategory obj hom id comp
+UnitCat : Category
+UnitCat = MkCategory obj hom id comp
   where
     obj : Type
     obj = ()
@@ -95,20 +95,20 @@ NullCat = MkCategory obj hom id comp
     --comp : {x1, x2, x3 : ()} -> hom x1 x2 -> hom x2 x3 -> hom x1 x3
     --comp h1 h2 = ()
 
-NullCatAx : CategoryAx NullCat
-NullCatAx = MkCatAx objEq arrowEq ?lawIdL -- (\x,y,a => Refl) -- ?h
+UnitCatAx : CategoryAx UnitCat
+UnitCatAx = MkCatAx objEq arrowEq ?lawIdL -- (\x,y,a => Refl) -- ?h
   where
     objEq : () -> () -> Type
     objEq x y = x=y
     arrowEq : (x, y : ()) -> () -> () -> Type
     arrowEq _ _ p q = p=q
-    lawIdL : (x, y : Obj NullCat) -> (a : Hom NullCat x y) -> (arrowEq _ _ a a)
+    lawIdL : (x, y : Obj UnitCat) -> (a : Hom UnitCat x y) -> (arrowEq _ _ a a)
     lawIdL _ _ () = Refl
-    --lawIdL : {x, y : ()} -> (a : Obj NullCat) -> (Category.Category.Comp NullCat (Id NullCat x) a) = a
+    --lawIdL : {x, y : ()} -> (a : Obj UnitCat) -> (Category.Category.Comp UnitCat (Id UnitCat x) a) = a
     --lawIdL () = Refl
     -- let eq = arrowEq a a in eq
-  -- arrowEq a ((>>>) {c=NullCat} {y=x} (Id NullCat x) a)
-    -- lawIdL : {x, y : Obj NullCat} -> (a : Hom NullCat x y) -> arrowEq a ((>>>) {c=NullCat} {y=x} (Id NullCat x) a)
+  -- arrowEq a ((>>>) {c=UnitCat} {y=x} (Id UnitCat x) a)
+    -- lawIdL : {x, y : Obj UnitCat} -> (a : Hom UnitCat x y) -> arrowEq a ((>>>) {c=UnitCat} {y=x} (Id UnitCat x) a)
 -- (\x,y => x=y)
 
 -}
