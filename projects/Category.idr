@@ -17,14 +17,19 @@ record Category where
   Obj  : Type
   Hom  : Obj -> Obj -> Type
   Id   : (x : Obj) -> Hom x x
-  Comp : {x, y, z : Obj} -> Hom y z -> Hom x y -> Hom x z
+  Comp : {x, y, z : Obj} -> (g : Hom y z) -> (f : Hom x y) -> Hom x z
   
--- Comp f g is "f after g"
--- f >> g   is "f then g"
+-- Comp g f is "g after f"
+
+-- g . f is Comp g f (is "g after f")
+-- f >>> g  is "f then g"
 
 infixr 1 >>>
 (>>>) : {c : Category} -> {x, y, z : Obj c} -> Hom c x y -> Hom c y z -> Hom c x z
 (>>>) {c} {x} {y} {z} f g = Comp c g f
+
+(.) : {c : Category} -> {x, y, z : Obj c} -> Hom c y z -> Hom c x y -> Hom c x z
+(.) {c} {x} {y} {z} g f = Comp c g f
 
 ---+--------------------------------------
 ---+  Category axioms
@@ -34,10 +39,10 @@ record CategoryAx (c : Category) where
   constructor MkCatAx
   ObjEq     : (Obj c) -> (Obj c) -> Type
   ArrowEq   : {x, y : Obj c} -> (Hom c x y) -> (Hom c x y) -> Type
-  Law_idL   : {x, y : Obj c} -> (a : Hom c x y) -> ArrowEq a ((Id c x) >>> a)
-  Law_idR   : {x, y : Obj c} -> (a : Hom c x y) -> ArrowEq a (a >>> (Id c y))
-  Law_assoc : {x, y, z, w : Obj c} -> (p : Hom c x y) -> (q : Hom c y z) -> (r : Hom c z w) 
-              -> ArrowEq (p >>> (q >>> r)) ((p >>> q) >>> r)
+  Law_idR   : {x, y : Obj c} -> (f : Hom c x y) -> ArrowEq f (Comp c f (Id c x))
+  Law_idL   : {x, y : Obj c} -> (f : Hom c x y) -> ArrowEq f (Comp c (Id c y) f)
+  Law_assoc : {x, y, z, w : Obj c} -> (f : Hom c x y) -> (g : Hom c y z) -> (h : Hom c z w) 
+              -> ArrowEq (Comp c (Comp c h g) f) (Comp c h (Comp c g f))
   
 --------------------------------------------------------------------------------
 -- Categories: (), Empty
@@ -55,8 +60,8 @@ UnitCatAx : CategoryAx UnitCat
 UnitCatAx = MkCatAx 
   (\x,y => x=y)    -- ObjEq   : (Obj c) -> (Obj c) -> Type
   (\p,q => p=q)    -- ArrowEq : {x, y : Obj c} -> (Hom c x y) -> (Hom c x y) -> Type
-  (\() => Refl)    -- Law_idL : {x, y : Obj c} -> (a : Hom c x y) -> ArrowEq a ((Id c x) >>> a)
-  (\() => Refl)    -- Law_idR : {x, y : Obj c} -> (a : Hom c x y) -> ArrowEq a (a >>> (Id c y))
+  (\() => Refl)    -- Law_idR : {x, y : Obj c} -> (a : Hom c x y) -> ArrowEq a ((Id c x) >>> a)
+  (\() => Refl)    -- Law_idL : {x, y : Obj c} -> (a : Hom c x y) -> ArrowEq a (a >>> (Id c y))
   (\p,q,r => Refl) -- Law_assoc : (p : Hom c x y) -> (q : Hom c y z) -> (r : Hom c z w) -> ArrowEq (p >>>(q>>>r)) ((p>>>q)>>>r)
   
 EmptyCat : Category
@@ -70,8 +75,8 @@ EmptyCatAx : CategoryAx EmptyCat
 EmptyCatAx = MkCatAx 
   (\x,y => x=y)        -- ObjEq   : (Obj c) -> (Obj c) -> Type
   (\p,q => p=q)        -- ArrowEq : {x, y : Obj c} -> (Hom c x y) -> (Hom c x y) -> Type
-  (\p => absurd p)     -- Law_idL : {x, y : Obj c} -> (a : Hom c x y) -> ArrowEq a ((Id c x) >>> a)
-  (\q => absurd q)     -- Law_idR : {x, y : Obj c} -> (a : Hom c x y) -> ArrowEq a (a >>> (Id c y))
+  (\p => absurd p)     -- Law_idR : {x, y : Obj c} -> (a : Hom c x y) -> ArrowEq a ((Id c x) >>> a)
+  (\q => absurd q)     -- Law_idL : {x, y : Obj c} -> (a : Hom c x y) -> ArrowEq a (a >>> (Id c y))
   (\p,q,r => absurd p) -- Law_assoc : (p : Hom c x y) -> (q : Hom c y z) -> (r : Hom c z w) -> ArrowEq (p >>>(q>>>r)) ((p>>>q)>>>r)
 
 
@@ -152,8 +157,8 @@ MonoidCatAx : (m : Monoid) ->  (max : MonoidAx m) -> CategoryAx (MonoidCat m)
 MonoidCatAx m max = MkCatAx 
   (\x,y => ())         -- ObjEq   : (Obj c) -> (Obj c) -> Type
   (\a,b => a=b)        -- ArrowEq : {x, y : Obj c} -> (Hom c x y) -> (Hom c x y) -> Type
-  (law_ER max)         -- Law_idL : {x, y : Obj c} -> (a : Hom c x y) -> ArrowEq a ((Id c x) >>> a)
-  (law_EL max)         -- Law_idR : {x, y : Obj c} -> (a : Hom c x y) -> ArrowEq a (a >>> (Id c y))
+  (law_ER max)         -- Law_idR : {x, y : Obj c} -> (a : Hom c x y) -> ArrowEq a ((Id c x) >>> a)
+  (law_EL max)         -- Law_idL : {x, y : Obj c} -> (a : Hom c x y) -> ArrowEq a (a >>> (Id c y))
   (law_assoc max)      -- Law_assoc : (a,b,c : _) -> ArrowEq (a>>>(b>>>c)) ((a>>>b)>>>c)
 
 ---+------------------------------------------
@@ -178,9 +183,9 @@ CatHom2Monoid : (c : Category) -> (cAx : CategoryAx c) -> (x : Obj c) -> (m : Mo
 CatHom2Monoid c cax x = 
   let 
     m = MkMonoid (Hom c x x) (Id c x) (Comp c) 
-    ll : ((a : (Hom c x x)) -> ArrowEq cax a (Comp c a (Id c x))) = Law_idL cax
-    -- LL : ((a : Hom c x x) -> law_EL c a)  = ?h  -- Law_idL cax a
-    -- max = MkMonoidAx (\a => Law_idL cax a) (\a => Law_idR cax a) ?h
+    ll : ((a : (Hom c x x)) -> ArrowEq cax a (Comp c a (Id c x))) = Law_idR cax
+    -- LL : ((a : Hom c x x) -> law_EL c a)  = ?h  -- Law_idR cax a
+    -- max = MkMonoidAx (\a => Law_idR cax a) (\a => Law_idL cax a) ?h
   in ?CatHom2Monoid_rhs
 -}
 
@@ -210,30 +215,13 @@ MkMonoidAx : ((a : S m) -> a = Op m (E m) a) ->
                      and
                              v0 = Comp c x x x v0 (Id c x)
 -}
-{-
-  law_EL : (a : (S m)) -> a = (Op m (E m) a)
-  law_ER : (a : (S m)) -> a = (Op m a (E m))
-  law_assoc : (a,b,c : (S m)) -> (Op m (Op m a b) c) = (Op m a (Op m b c)) 
--}
 
-  
----+------------------------------------------
----+  Category Axioms using the builtin = type
----+------------------------------------------
+---+----------------------------------------------
+---+  Category Axioms with built-in = 
+---+----------------------------------------------
 
 record CategoryAxEq (c : Category) where
   constructor MkCatAxEq
-  Law_idL   : {x, y : Obj c} -> (a : Hom c x y) -> a = ((Id c x) >>> a)
-  Law_idR   : {x, y : Obj c} -> (a : Hom c x y) -> a = (a >>> (Id c y))
-  Law_assoc : {x, y, z, w : Obj c} -> (p : Hom c x y) -> (q : Hom c y z) -> (r : Hom c z w) 
-              -> (p >>> (q >>> r)) = ((p >>> q) >>> r)
-  
----+----------------------------------------------
----+  Category Axioms with = & Comp instead of >>>
----+----------------------------------------------
-
-record CategoryAxEqC (c : Category) where
-  constructor MkCatAxEqC
   Law_idR   : {x, y : Obj c} -> (f : Hom c x y) -> f = (Comp c f (Id c x))
   Law_idL   : {x, y : Obj c} -> (f : Hom c x y) -> f = (Comp c (Id c y) f)
   Law_assoc : {x, y, z, w : Obj c} -> (f : Hom c x y) -> (g : Hom c y z) -> (h : Hom c z w) 
@@ -244,15 +232,15 @@ record CategoryAxEqC (c : Category) where
 ---+   the arrows of Hom x x form a monoid
 ---+----------------------------------------------
 
-OneObjCat2Monoid3 : (c : Category) -> (cax: CategoryAxEqC c) -> (x : Obj c) -> (m : Monoid ** MonoidAx m)
+OneObjCat2Monoid3 : (c : Category) -> (cax: CategoryAxEq c) -> (x : Obj c) -> (m : Monoid ** ((S m) = (Hom c x x) , MonoidAx m))
 OneObjCat2Monoid3 c cax x = 
   let
     m = MkMonoid (Hom c x x)  (Id c x) (Comp c)
-    lel = Law_idL cax 
     ler = Law_idR cax 
+    lel = Law_idL cax 
     lassoc = Law_assoc cax
     max : MonoidAx m = MkMonoidAx lel ler lassoc
-  in (m ** max)
+  in (m ** (Refl , max))
 
  
 
