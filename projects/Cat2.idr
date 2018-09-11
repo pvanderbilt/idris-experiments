@@ -18,16 +18,18 @@ import Category
 
 PLTypeCat : Category
 PLTypeCat = MkCategory 
-  Type                 -- Obj  : Type
-  (\a,b => a->b)       -- Hom  : Obj -> Obj -> Type
-  (\a, x => x)         -- Id   : (x : Obj) -> Hom x x
-  (\g,f, x => g (f x)) -- Comp : {x, y, z : Obj} -> Hom y z -> Hom x y -> Hom x z
+  Type                    -- Obj  : Type
+  (\a,b => a->b)          -- Hom  : Obj -> Obj -> Type
+  (\_, x => x)            -- Id   : (x : Obj) -> Hom x x
+  (\g,f => \x => g (f x)) -- Comp : {x, y, z : Obj} -> Hom y z -> Hom x y -> Hom x z
 
 
-PLTypeCatAx : CategoryAxEq PLTypeCat
-PLTypeCatAx = MkCatAxEq
+PLTypeCatAx : CategoryAx PLTypeCat
+PLTypeCatAx = MkCatAx
+  (=)                  -- ObjEq
+  (=)                  -- ArrowEq
   (\f => Refl)         -- Law_idR   : {x, y : Obj c} -> (f : Hom c x y) -> f = (Comp c f (Id c x))
-  (\_ => Refl)         -- Law_idL   : {x, y : Obj c} -> (f : Hom c x y) -> f = (Comp c (Id c x) f)
+  (\f => Refl)         -- Law_idL   : {x, y : Obj c} -> (f : Hom c x y) -> f = (Comp c (Id c x) f)
   (\f,g,h => Refl)     -- Law_assoc : {x, y, z, w : Obj c} -> (f : Hom c x y) -> (g : Hom c y z) -> (h : Hom c z w) 
                        --              -> (Comp c (Comp c h g) f) = (Comp c h (Comp c g f))
 
