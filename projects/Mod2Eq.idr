@@ -39,16 +39,6 @@ ModPred : Mod n -> Mod n
 ModPred (MkMod Z j p)       = MkMod j Z (trans p $ cong {f=S} $ plusCommutative Z j)
 ModPred (MkMod (S i') j' p) = MkMod i' (S j') $ trans p $ cong {f=S}  $ plusSuccRightSucc i' j'
 
-{-
-ModPred : Mod n -> Mod n
-ModPred (MkMod Z j) =       let result = MkMod j Z 
-                                goalSw = plusCommutative Z j
-                            in rewrite goalSw in result
-ModPred (MkMod (S i') j') = let result = MkMod i' (S j') 
-                                goalSw = plusSuccRightSucc i' j'
-                            in rewrite goalSw in result
--}
-
 -----------------------------------------------------------
 --  Addition
 -----------------------------------------------------------
@@ -56,11 +46,6 @@ ModPred (MkMod (S i') j') = let result = MkMod i' (S j')
 ModAdd : Mod n -> Mod n -> Mod n
 ModAdd (MkMod Z _ _) y = y
 ModAdd x@(MkMod (S i') j' p) y = ModSucc (ModAdd (assert_smaller x (ModPred x)) y)
-
-{-
-ModAdd (MkMod Z _) y = y
-ModAdd x@(MkMod (S i') j') y = ModSucc (ModAdd (assert_smaller (MkMod (S i') j') (ModPred x)) y)
--}
 
 -----------------------------------------------------------
 --  Inverse
@@ -71,26 +56,33 @@ ModInv (MkMod Z j p) = (MkMod Z j p)
 ModInv (MkMod (S i') j' p) = let peq = trans p $ cong {f=S . S} $ plusCommutative i' j'
                              in MkMod (S j') i' peq
 
-ModInv' : Mod n -> Mod n
-ModInv' (MkMod Z j p) = (MkMod Z j p)
-ModInv' (MkMod (S i') j' p) = MkMod (S j') i' peq
-  where
-    peq : n = S (S j' + i')
-    -- p : n = S (S i' + j') = (S . S) (i' + j')
-    peq = trans p $ cong {f=S . S} $ plusCommutative i' j'
- 
-
 -----------------------------------------------------------
 --  Axioms
 --     axInv2isId: ModInv is its own inverse
 --     axLZ : 0 + m = m
+--     axRZ : m + 0 = m
 --     (the rest are TBD)
 -----------------------------------------------------------
 
 axLZ : (m : Mod (S _)) -> (ModAdd ModZ m) = m
 axLZ m = Refl
 
+axRZ : (m : Mod (S p)) -> (ModAdd m ModZ) = m
+axRZ (MkMod Z j peq) = ?axRZ_rhs_2
+axRZ {p = Z} (MkMod (S _) Z Refl) impossible
+axRZ {p = Z} (MkMod (S _) (S _) Refl) impossible
+axRZ {p = (S i)} (MkMod (S k) j peq) = ?axRZ_rhs_4
 
+{-
+axRZ {p = Z} (MkMod Z Z Refl) = Refl
+axRZ {p = Z} (MkMod Z (S _) Refl) impossible
+axRZ {p = Z} (MkMod (S _) _ Refl) impossible
+axRZ {p = (S k)} (MkMod Z j p) = ?axRZ_rhs_2
+axRZ {p = (S k)} (MkMod (S i) j p) = ?axRZ_rhs_3
+
+axRZ (MkMod i Z p) = ?axRZ_rhs_2
+axRZ (MkMod i (S k) p) = ?axRZ_rhs_3
+-}
 lemTransAssoc : (p,q,r : _) -> (trans p (trans q r)) = (trans (trans p q) r)
 lemTransAssoc Refl Refl Refl = Refl
 
@@ -161,39 +153,46 @@ ModEq : (m1, m2 : Mod n) -> Type
 ModEq m1 m2 = (Modv m1 = Modv m2)
 --ModEq (MkMod i1 j1 p1) (MkMod i2 j2 p2) = (i1 = i2)
 
-lemAddInj : {x,y1,y2 : Nat} -> (x+y1)=(x+y2) -> y1=y2
-lemAddInj {x = Z} prf = prf
-lemAddInj {x = (S k)} prf = lemAddInj {x = k} $ succInjective _ _ prf
+lemAddRInj : (x,y1,y2 : Nat) -> (x+y1)=(x+y2) -> y1=y2
+lemAddRInj Z y1 y2 prf = prf
+lemAddRInj (S x') y1 y2 prf = lemAddRInj x' y1 y2 $ succInjective _ _ prf
 
 lemEq3 :  {x,y1,y2 : Nat} -> (p1 : x = y1) -> (p2 : x = y2) -> (y1 = y2, p1 = p2)
 lemEq3 Refl Refl = (Refl, Refl)
 
+{- OK, works
 lemEqIsId : (m1, m2 : Mod (S n')) -> ModEq m1 m2 -> m1 = m2
 lemEqIsId (MkMod i j1 p1) (MkMod i j2 p2) Refl = 
   let 
     (peq, ppeq) = lemEq3 p1 p2 
-    peq2 = lemAddInj {y1=j1} {y2=j2} $ succInjective _ _ peq
-    -- xxx = cong {f = MkMod i} peq2
-  in ?h_1
-
-{-
-lemEqIsId (MkMod Z j Refl) (MkMod Z j Refl) Refl = Refl
-lemEqIsId (MkMod Z j1 p1) (MkMod (S k) j2 p2) peq = absurd peq
-lemEqIsId (MkMod (S k) j1 p1) (MkMod Z j2 p2) peq = absurd peq
-lemEqIsId (MkMod (S k) j1 Refl) (MkMod (S k) j2 p2) Refl = let Refl = lemAddInj $ succInjective _ _ p2 in ?lemEqIsId_rhs_2
+    Refl = lemAddInj {y1=j1} {y2=j2} $ succInjective _ _ peq
+-- xxx = cong {f = MkMod i} peq2
+  in (case ppeq of
+           Refl => Refl)
 -}
-{-
-lemEqIsId (MkMod i Z Refl) (MkMod i Z Refl) Refl = ?lemEqIsId_rhs_1
-lemEqIsId (MkMod i Z p1) (MkMod i (S k) p2) Refl = ?lemEqIsId_rhs_4
-lemEqIsId (MkMod i (S k1) p1) (MkMod i j2 p2) Refl = ?lemEqIsId_rhs_3
--}
-predSuccIsId : (m : Mod (S n')) -> (ModPred (ModSucc m)) = m
-predSuccIsId (MkMod Z Z Refl) = Refl
-predSuccIsId (MkMod Z (S k) Refl) = Refl
-predSuccIsId (MkMod (S k) Z Refl) = ?predSuccIsId_rhs_4
-predSuccIsId (MkMod (S k) (S j) p) = ?predSuccIsId_rhs_2
 
--- putting in "{n'}" breaks it
+lemEqPrfsEq : (p1, p2 : x = y) -> p1 = p2
+lemEqPrfsEq Refl Refl = Refl
+
+lemEqIsId : (m1, m2 : Mod (S n')) -> ModEq m1 m2 -> m1 = m2
+lemEqIsId (MkMod i j1 p1) (MkMod i j2 p2) Refl = 
+  let
+    prhss : (i + j1 = i + j2) = succInjective _ _ $ trans (sym p1) p2
+    Refl  : (j1 = j2) = lemAddRInj i j1 j2 prhss
+    peq   : (p1 = p2) = lemEqPrfsEq p1 p2
+  in cong peq
+
+predSuccIsId : (m : Mod (S n')) -> ModPred (ModSucc m) = m
+predSuccIsId (MkMod i Z p) = lemEqIsId _ _ Refl
+predSuccIsId (MkMod i (S k) p) = lemEqIsId _ _ Refl
+
+lemModPredS : (m : Mod (S _)) -> Modv m = (S k) -> Modv (ModPred m) = k
+lemModPredS (MkMod Z _ _) Refl impossible
+lemModPredS (MkMod (S k) j p) Refl = Refl
+
+lemModPredZ : (m : Mod (S p)) -> Modv m = Z -> Modv (ModPred m) = p
+lemModPredZ (MkMod Z j peq) Refl = succInjective _ _ $ sym peq -- ?lemModPredZ_rhs_1
+lemModPredZ (MkMod (S _) _ _) Refl impossible
 
 {- In progress, may need lemmas above 
 axLR : (m : Mod (S n')) -> (ModAdd m ModZ) = m
