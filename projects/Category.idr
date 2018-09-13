@@ -15,7 +15,7 @@ module Category
 record Category where
   constructor MkCategory
   Obj  : Type
-  Hom  : Obj -> Obj -> Type
+  Hom  : (x, y : Obj) -> Type
   Id   : (x : Obj) -> Hom x x
   Comp : {x, y, z : Obj} -> (g : Hom y z) -> (f : Hom x y) -> Hom x z
   
@@ -37,8 +37,8 @@ infixr 1 >>>
 
 record CategoryAx (c : Category) where
   constructor MkCatAx
-  ObjEq     : (Obj c) -> (Obj c) -> Type
-  ArrowEq   : {x, y : Obj c} -> (Hom c x y) -> (Hom c x y) -> Type
+  ObjEq     : (x, y : Obj c) -> Type
+  ArrowEq   : {x, y : Obj c} -> (f, g : Hom c x y) -> Type
   Law_idR   : {x, y : Obj c} -> (f : Hom c x y) -> ArrowEq f (Comp c f (Id c x))
   Law_idL   : {x, y : Obj c} -> (f : Hom c x y) -> ArrowEq f (Comp c (Id c y) f)
   Law_assoc : {x, y, z, w : Obj c} -> (f : Hom c x y) -> (g : Hom c y z) -> (h : Hom c z w) 
