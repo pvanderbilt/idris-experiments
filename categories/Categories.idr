@@ -1,11 +1,173 @@
 module Categories
 
-import Category
+import CatCore
 import Data.List
 
 %default total
 
  
+
+--------------------------------------------------------------------------------
+-- Categories: 
+--    Empty, Unit
+--    programming lang types & functions, 
+--    PL types with functions A -> List(B)
+--------------------------------------------------------------------------------
+
+---+----------------------------------------------
+---+ Empty and Unit Categories
+---+----------------------------------------------
+
+EmptyCat : Category
+EmptyCat = MkCategory 
+  Void                -- Obj : Type
+  (\x,y => Void)      -- Hom    : Obj -> Obj -> Type
+  (\p => absurd p)    -- Id  : (x : Obj) -> Hom x x
+  (\p,q => absurd p)  -- Comp : (x, y, z : Obj) -> Hom y z -> Hom x y -> Hom x z
+  (\p,q => p=q)
+  
+EmptyCatAx : CategoryAx EmptyCat
+EmptyCatAx = MkCatAx 
+  (\p => absurd p)     -- Law_idR : {x, y : Obj c} -> (a : Hom c x y) -> ArrowEq a ((Id c x) >>> a)
+  (\q => absurd q)     -- Law_idL : {x, y : Obj c} -> (a : Hom c x y) -> ArrowEq a (a >>> (Id c y))
+  (\p,q,r => absurd p) -- Law_assoc : (p : Hom c x y) -> (q : Hom c y z) -> (r : Hom c z w) 
+                       --    -> ArrowEq (p >>>(q>>>r)) ((p>>>q)>>>r)
+
+UnitCat : Category
+UnitCat = MkCategory 
+  ()                 -- Obj : Type
+  (\_,_ => ())       -- Hom    : Obj -> Obj -> Type
+  (\_ => ())         -- Id  : (x : Obj) -> Hom x x
+  (\_,_ => ())       -- Comp : (x, y, z : Obj) -> Hom y z -> Hom x y -> Hom x z
+  (\p,q => p=q)      -- ArrowEq : {x, y : Obj c} -> (f, g : Hom c x y) -> Type
+
+
+UnitCatAx : CategoryAx UnitCat
+UnitCatAx = MkCatAx 
+  (\() => Refl)    -- Law_idR : {x, y : Obj c} -> (a : Hom c x y) -> ArrowEq a ((Id c x) >>> a)
+  (\() => Refl)    -- Law_idL : {x, y : Obj c} -> (a : Hom c x y) -> ArrowEq a (a >>> (Id c y))
+  (\p,q,r => Refl) -- Law_assoc : (p : Hom c x y) -> (q : Hom c y z) -> (r : Hom c z w) -> ArrowEq (p >>>(q>>>r)) ((p>>>q)>>>r)
+  
+
+--------------------------------------------------------------------------------
+-- Monoids & Monoid-related categories
+--
+-- Monoid and MonoidCat (with laws)
+-- Any single element Category is a Monoid
+-- Monoids under Homorphisms form a category
+--------------------------------------------------------------------------------
+
+---+------------------------------------------
+---+ Monoids & axioms
+---+------------------------------------------
+
+record Monoid where
+  constructor MkMonoid
+  S  : Type
+  E  : S
+  Op : S -> S -> S
+  
+record MonoidAx (m : Monoid) where 
+  constructor MkMonoidAx
+  law_EL : (a : (S m)) -> a = (Op m (E m) a)
+  law_ER : (a : (S m)) -> a = (Op m a (E m))
+  law_assoc : (c,b,a : (S m)) -> (Op m (Op m a b) c) = (Op m a (Op m b c)) 
+
+---+------------------------------------------
+---+ Every monoid is a category
+---+------------------------------------------
+
+MonoidCat : (m : Monoid) -> Category
+MonoidCat m = MkCategory 
+  ()                   -- Obj : Type
+  (\_,_ => (S m))      -- Hom    : Obj -> Obj -> Type
+  (\_ => (E m))        -- Id  : (x : Obj) -> Hom x x
+  (\p,q => (Op m p q)) -- Comp : (x, y, z : Obj) -> Hom y z -> Hom x y -> Hom x z
+  (\a,b => a=b)        -- ArrowEq : {x, y : Obj c} -> (Hom c x y) -> (Hom c x y) -> Ty
+
+MonoidCatAx : (m : Monoid) ->  (max : MonoidAx m) -> CategoryAx (MonoidCat m)
+MonoidCatAx m max = MkCatAx 
+  (law_ER max)         -- Law_idR : {x, y : Obj c} -> (a : Hom c x y) -> ArrowEq c a ((Id c x) >>> a)
+  (law_EL max)         -- Law_idL : {x, y : Obj c} -> (a : Hom c x y) -> ArrowEq c a (a >>> (Id c y))
+  (law_assoc max)      -- Law_assoc : (a,b,c : _) -> ArrowEq (a>>>(b>>>c)) ((a>>>b)>>>c)
+
+---+------------------------------------------
+---+ Any 1 object category is a monoid
+---+------------------------------------------
+
+OneObjCat2Monoid : (c : Category) -> ((Obj c) = ()) -> Monoid
+OneObjCat2Monoid c p = let theObj : Obj c = rewrite p in () 
+                       in MkMonoid (Hom c theObj theObj)  (Id c theObj) (Comp c)
+
+OneObjCat2Monoid2 : (c : Category) -> (x : Obj c ** (y : Obj c) -> x=y) -> Monoid
+OneObjCat2Monoid2 c (x ** _) = MkMonoid (Hom c x x)  (Id c x) (Comp c)
+
+
+
+---+----------------------------------------------
+---+ In fact, for *any* category and *any* object x, 
+---+   the arrows of Hom x x form a monoid
+---+----------------------------------------------
+
+{- A previous attempt failed because of abstract ArrowId,
+   which is why this uses CategoryAxEq instead of CategoryAx -}
+
+Hom2Monoid : (c : Category) -> (cax: CategoryAxEq c) -> (x : Obj c) 
+             -> (m : Monoid ** ((S m) = (Hom c x x) , MonoidAx m))
+Hom2Monoid c cax x = 
+  let
+    m = MkMonoid (Hom c x x)  (Id c x) (Comp c)
+    ler = Law_idR cax 
+    lel = Law_idL cax 
+    lassoc = Law_assoc cax
+    max : MonoidAx m = MkMonoidAx lel ler lassoc
+  in (m ** (Refl , max))
+
+
+
+---+--------------------------------------------------------
+---+ Monoid Homorphisms and related
+---+
+---+ `MonoidHom m1 m2` is a type of (f ** (pe, pop)) triples
+---+   where `f` is a mapping from m1's set to m2's,
+---+   pe is a proof that f preserves identity and
+---+   pop is a proof that f preserves Op 
+---+ `MonoidIdHom m` is the identity homomorphism for m
+---+ `MonoidIdComp` is monoid homomorphism composition
+---+---------------------------------------------------------
+
+MonoidHom : (m1, m2 : Monoid) -> Type
+MonoidHom m1 m2 = (f : (S m1 -> S m2) ** 
+                   ( (f (E m1) = E m2) , 
+                     (x, y : S m1) -> (f (Op m1 x y) = Op m2 (f x) (f y)) ) )
+
+MonoidIdHom : (m : Monoid) -> MonoidHom m m
+MonoidIdHom m = (id ** (Refl , (\_,_ => Refl)))
+
+MonoidHomComp : {m1, m2, m3 : Monoid} -> MonoidHom m2 m3 -> MonoidHom m1 m2 -> MonoidHom m1 m3
+MonoidHomComp h23 h12 = 
+  let 
+    (f12 ** (pid12 , pcomp12)) = h12 
+    (f23 ** (pid23 , pcomp23)) = h23 
+  in 
+    ((f23 . f12) ** 
+     (trans (cong {f=f23} pid12) pid23 , 
+     (\x, y => let 
+                 -- p23R : f23 (f12 (Op m1 x y)) = f23 (Op m2 (f12 x) (f12 y))
+                 -- p23L : f23 (Op m2 (f12 x) (f12 y)) = Op m3 (f23 (f12 x)) (f23 (f12 y))
+                 p23R = (cong {f=f23} (pcomp12 x y))
+                 p23L = pcomp23 (f12 x) (f12 y)
+               in trans p23R p23L) ))
+
+---+--------------------------------------------------------
+---+ The set of monoids form a category under homomorphism
+---+--------------------------------------------------------
+
+MonoidsCat : Category
+MonoidsCat = MkCategory Monoid MonoidHom MonoidIdHom MonoidHomComp (=)
+
+
+
 --------------------------------------------------------------------------------
 -- Categories: 
 --    programming lang types & functions, 

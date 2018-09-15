@@ -1,6 +1,6 @@
 module CatConstructions
 
-import Category
+import CatCore
 
 %access public export
 %default total
