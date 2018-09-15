@@ -15,22 +15,34 @@ module CatCore
 record Category where
   constructor MkCategory
   Obj     : Type
-  Hom     : (x, y : Obj) -> Type
-  Id      : (x : Obj) -> Hom x x
-  Comp    : {x, y, z : Obj} -> (g : Hom y z) -> (f : Hom x y) -> Hom x z
-  ArrowEq : {x, y : Obj} -> (f, g : Hom x y) -> Type
+  IHom    : (x, y : Obj) -> Type
+  IId     : (x : Obj) -> IHom x x
+  IComp   : {x, y, z : Obj} -> (g : IHom y z) -> (f : IHom x y) -> IHom x z
+  ArrowEq : {x, y : Obj} -> (f, g : IHom x y) -> Type
   
--- Comp g f is "g after f"
 
--- g . f is Comp g f (is "g after f")
--- f >>> g  is "f then g"
+-- ACCESSORS
 
-infixr 1 >>>
-(>>>) : {c : Category} -> {x, y, z : Obj c} -> Hom c x y -> Hom c y z -> Hom c x z
-(>>>) {c} {x} {y} {z} f g = Comp c g f
+-- Homomorphisms of c from x to y
 
-(.) : {c : Category} -> {x, y, z : Obj c} -> Hom c y z -> Hom c x y -> Hom c x z
-(.) {c} {x} {y} {z} g f = Comp c g f
+Hom : {c : Category} -> (x, y : Obj c) -> Type
+Hom {c} x y = IHom c x y
+
+-- The identity function of c
+
+id : {c : Category} -> (x : Obj c) -> Hom x x
+id {c} x = IId c x
+
+-- Composition in c: `g . f` is "g after f"
+
+(.) : {c : Category} -> {x, y, z : Obj c} -> IHom c y z -> IHom c x y -> IHom c x z
+(.) {c} g f = IComp c g f
+
+-- Arrow equality in c: `f === g` means that c has that f and g are the same arrow 
+infixr 1 ===
+(===) : {c : Category} -> {x, y : Obj c} -> (f, g : IHom c x y) -> Type
+(===) {c} f g = ArrowEq c f g
+
 
 ---+--------------------------------------
 ---+  Category axioms
@@ -38,10 +50,12 @@ infixr 1 >>>
 
 record CategoryAx (c : Category) where
   constructor MkCatAx
-  Law_idR   : {x, y : Obj c} -> (f : Hom c x y) -> ArrowEq c f (Comp c f (Id c x))
-  Law_idL   : {x, y : Obj c} -> (f : Hom c x y) -> ArrowEq c f (Comp c (Id c y) f)
-  Law_assoc : {x, y, z, w : Obj c} -> (f : Hom c x y) -> (g : Hom c y z) -> (h : Hom c z w) 
-              -> ArrowEq c (Comp c (Comp c h g) f) (Comp c h (Comp c g f))
+  Law_idR   : {x, y : Obj c} -> (f : Hom x y) -> f === f . (id x)
+  Law_idL   : {x, y : Obj c} -> (f : Hom x y) -> f === (id y) . f
+  Law_assoc : {x, y, z, w : Obj c} -> (f : Hom x y) -> (g : Hom y z) -> (h : Hom z w) 
+                ->  (.) {c=c} (h . g) f === h . (g . f)
+
+{- Had trouble with getting the wrong implicit c, so made it explicit in the last line. -}
 
 ---+----------------------------------------------
 ---+  Category Axioms with built-in = 
@@ -49,10 +63,13 @@ record CategoryAx (c : Category) where
 
 record CategoryAxEq (c : Category) where
   constructor MkCatAxEq
-  Law_idR   : {x, y : Obj c} -> (f : Hom c x y) -> f = (Comp c f (Id c x))
-  Law_idL   : {x, y : Obj c} -> (f : Hom c x y) -> f = (Comp c (Id c y) f)
-  Law_assoc : {x, y, z, w : Obj c} -> (f : Hom c x y) -> (g : Hom c y z) -> (h : Hom c z w) 
-              -> (Comp c (Comp c h g) f) = (Comp c h (Comp c g f))
+  Law_idR   : {x, y : Obj c} -> (f : Hom x y) -> f = (IComp c f (id x))
+  Law_idL   : {x, y : Obj c} -> (f : Hom x y) -> f = (IComp c (id y) f)
+  Law_assoc : {x, y, z, w : Obj c} -> (f : Hom x y) -> (g : Hom y z) -> (h : Hom z w) 
+              -> (IComp c ((.) h g) f) = (IComp c h (CatCore.(.) g f))
+
+{-  Had trouble with (.) being interpreted as from Prelude.Basics (because (=) is heterogeneous),
+    so changed to explicit `IComp c` -}
 
 --------------------------------------------------------------------------------
 -- Some useful functions

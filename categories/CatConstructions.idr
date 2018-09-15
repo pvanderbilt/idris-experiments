@@ -11,19 +11,19 @@ data ExU : (a : Type) -> (eq : a -> a -> Type) -> (p : a -> Type) -> Type where
 record TerminalObjX (c : Category) where
   constructor MkTerminalObjX
   TerminalObj  : Obj c
-  InArrow      : (x : Obj c) -> Hom c x TerminalObj 
-  InArrowUniq  : (x : Obj c) -> (a : Hom c x TerminalObj) -> a = (InArrow x)
+  InArrow      : (x : Obj c) -> Hom x TerminalObj 
+  InArrowUniq  : (x : Obj c) -> (a : Hom x TerminalObj) -> a = (InArrow x)
 
 record InitialObjX (c : Category) where
   constructor MkInitialObjX
   InitialObj   : Obj c
-  OutArrow     : (x : Obj c) -> Hom c InitialObj x
-  OutArrowUniq : (x : Obj c) -> (a : Hom c InitialObj x) -> a = (OutArrow x)
+  OutArrow     : (x : Obj c) -> Hom InitialObj x
+  OutArrowUniq : (x : Obj c) -> (a : Hom InitialObj x) -> a = (OutArrow x)
 
 data IsInitialObj : (c : Category) -> (InitialObj : Obj c) -> Type where
   MkIsInitialObj : 
-    (OutArrow     : (x : Obj c) -> Hom c io x) ->
-    (OutArrowUniq : (x : Obj c) -> (a : Hom c io x) -> a = (OutArrow x))
+    (OutArrow     : (x : Obj c) -> Hom io x) ->
+    (OutArrowUniq : (x : Obj c) -> (a : Hom io x) -> a = (OutArrow x))
     -> IsInitialObj c io
 
 {- Thoughts:

@@ -5,7 +5,6 @@ import Data.List
 
 %default total
 
- 
 
 --------------------------------------------------------------------------------
 -- Categories: 
@@ -28,9 +27,9 @@ EmptyCat = MkCategory
   
 EmptyCatAx : CategoryAx EmptyCat
 EmptyCatAx = MkCatAx 
-  (\p => absurd p)     -- Law_idR : {x, y : Obj c} -> (a : Hom c x y) -> ArrowEq a ((Id c x) >>> a)
-  (\q => absurd q)     -- Law_idL : {x, y : Obj c} -> (a : Hom c x y) -> ArrowEq a (a >>> (Id c y))
-  (\p,q,r => absurd p) -- Law_assoc : (p : Hom c x y) -> (q : Hom c y z) -> (r : Hom c z w) 
+  (\p => absurd p)     -- Law_idR : {x, y : Obj c} -> (a : Hom x y) -> ArrowEq a ((id x) >>> a)
+  (\q => absurd q)     -- Law_idL : {x, y : Obj c} -> (a : Hom x y) -> ArrowEq a (a >>> (id y))
+  (\p,q,r => absurd p) -- Law_assoc : (p : Hom x y) -> (q : Hom y z) -> (r : Hom z w) 
                        --    -> ArrowEq (p >>>(q>>>r)) ((p>>>q)>>>r)
 
 UnitCat : Category
@@ -39,14 +38,14 @@ UnitCat = MkCategory
   (\_,_ => ())       -- Hom    : Obj -> Obj -> Type
   (\_ => ())         -- Id  : (x : Obj) -> Hom x x
   (\_,_ => ())       -- Comp : (x, y, z : Obj) -> Hom y z -> Hom x y -> Hom x z
-  (\p,q => p=q)      -- ArrowEq : {x, y : Obj c} -> (f, g : Hom c x y) -> Type
+  (\p,q => p=q)      -- ArrowEq : {x, y : Obj c} -> (f, g : Hom x y) -> Type
 
 
 UnitCatAx : CategoryAx UnitCat
 UnitCatAx = MkCatAx 
-  (\() => Refl)    -- Law_idR : {x, y : Obj c} -> (a : Hom c x y) -> ArrowEq a ((Id c x) >>> a)
-  (\() => Refl)    -- Law_idL : {x, y : Obj c} -> (a : Hom c x y) -> ArrowEq a (a >>> (Id c y))
-  (\p,q,r => Refl) -- Law_assoc : (p : Hom c x y) -> (q : Hom c y z) -> (r : Hom c z w) -> ArrowEq (p >>>(q>>>r)) ((p>>>q)>>>r)
+  (\() => Refl)    -- Law_idR : {x, y : Obj c} -> (a : Hom x y) -> ArrowEq a ((id x) >>> a)
+  (\() => Refl)    -- Law_idL : {x, y : Obj c} -> (a : Hom x y) -> ArrowEq a (a >>> (id y))
+  (\p,q,r => Refl) -- Law_assoc : (p : Hom x y) -> (q : Hom y z) -> (r : Hom z w) -> ArrowEq (p >>>(q>>>r)) ((p>>>q)>>>r)
   
 
 --------------------------------------------------------------------------------
@@ -83,12 +82,12 @@ MonoidCat m = MkCategory
   (\_,_ => (S m))      -- Hom    : Obj -> Obj -> Type
   (\_ => (E m))        -- Id  : (x : Obj) -> Hom x x
   (\p,q => (Op m p q)) -- Comp : (x, y, z : Obj) -> Hom y z -> Hom x y -> Hom x z
-  (\a,b => a=b)        -- ArrowEq : {x, y : Obj c} -> (Hom c x y) -> (Hom c x y) -> Ty
+  (\a,b => a=b)        -- ArrowEq : {x, y : Obj c} -> (Hom x y) -> (Hom x y) -> Ty
 
 MonoidCatAx : (m : Monoid) ->  (max : MonoidAx m) -> CategoryAx (MonoidCat m)
 MonoidCatAx m max = MkCatAx 
-  (law_ER max)         -- Law_idR : {x, y : Obj c} -> (a : Hom c x y) -> ArrowEq c a ((Id c x) >>> a)
-  (law_EL max)         -- Law_idL : {x, y : Obj c} -> (a : Hom c x y) -> ArrowEq c a (a >>> (Id c y))
+  (law_ER max)         -- Law_idR : {x, y : Obj c} -> (a : Hom x y) -> ArrowEq c a ((id x) >>> a)
+  (law_EL max)         -- Law_idL : {x, y : Obj c} -> (a : Hom x y) -> ArrowEq c a (a >>> (id y))
   (law_assoc max)      -- Law_assoc : (a,b,c : _) -> ArrowEq (a>>>(b>>>c)) ((a>>>b)>>>c)
 
 ---+------------------------------------------
@@ -97,10 +96,10 @@ MonoidCatAx m max = MkCatAx
 
 OneObjCat2Monoid : (c : Category) -> ((Obj c) = ()) -> Monoid
 OneObjCat2Monoid c p = let theObj : Obj c = rewrite p in () 
-                       in MkMonoid (Hom c theObj theObj)  (Id c theObj) (Comp c)
+                       in MkMonoid (Hom theObj theObj)  (id theObj) (IComp c)
 
 OneObjCat2Monoid2 : (c : Category) -> (x : Obj c ** (y : Obj c) -> x=y) -> Monoid
-OneObjCat2Monoid2 c (x ** _) = MkMonoid (Hom c x x)  (Id c x) (Comp c)
+OneObjCat2Monoid2 c (x ** _) = MkMonoid (Hom x x)  (id x) (IComp c)
 
 
 
@@ -113,10 +112,10 @@ OneObjCat2Monoid2 c (x ** _) = MkMonoid (Hom c x x)  (Id c x) (Comp c)
    which is why this uses CategoryAxEq instead of CategoryAx -}
 
 Hom2Monoid : (c : Category) -> (cax: CategoryAxEq c) -> (x : Obj c) 
-             -> (m : Monoid ** ((S m) = (Hom c x x) , MonoidAx m))
+             -> (m : Monoid ** ((S m) = (Hom x x) , MonoidAx m))
 Hom2Monoid c cax x = 
   let
-    m = MkMonoid (Hom c x x)  (Id c x) (Comp c)
+    m = MkMonoid (Hom x x)  (id x) (IComp c)
     ler = Law_idR cax 
     lel = Law_idL cax 
     lassoc = Law_assoc cax
@@ -190,10 +189,10 @@ PLTypeCat = MkCategory
 
 PLTypeCatAx : CategoryAx PLTypeCat
 PLTypeCatAx = MkCatAx
-  (\f => Refl)         -- Law_idR   : {x, y : Obj c} -> (f : Hom c x y) -> f = (Comp c f (Id c x))
-  (\f => Refl)         -- Law_idL   : {x, y : Obj c} -> (f : Hom c x y) -> f = (Comp c (Id c x) f)
-  (\f,g,h => Refl)     -- Law_assoc : {x, y, z, w : Obj c} -> (f : Hom c x y) -> (g : Hom c y z) -> (h : Hom c z w) 
-                       --              -> (Comp c (Comp c h g) f) = (Comp c h (Comp c g f))
+  (\f => Refl)         -- Law_idR   : {x, y : Obj c} -> (f : Hom x y) -> f = ((.) f (id x))
+  (\f => Refl)         -- Law_idL   : {x, y : Obj c} -> (f : Hom x y) -> f = ((.) (id x) f)
+  (\f,g,h => Refl)     -- Law_assoc : {x, y, z, w : Obj c} -> (f : Hom x y) -> (g : Hom y z) -> (h : Hom z w) 
+                       --              -> ((.) ((.) h g) f) = ((.) h ((.) g f))
 
 ---+-----------------------------------------------
 ---+ Category with PL-types, morphisms A => List(B)
@@ -256,9 +255,9 @@ lem_fm_assoc' f g h x with (f x)
 
 FMCatAx : CategoryAx FMCat
 FMCatAx = MkCatAx
-  --  Law_idL   : {x, y : Obj c} -> (a : Hom c x y) -> ArrowEq a ((Id c x) . a)
-  --  Law_idR   : {x, y : Obj c} -> (a : Hom c x y) -> ArrowEq a (a . (Id c y))
-  --  Law_assoc : {x, y, z, w : Obj c} -> (p : Hom c x y) -> (q : Hom c y z) -> (r : Hom c z w) 
+  --  Law_idL   : {x, y : Obj c} -> (a : Hom x y) -> ArrowEq a ((id x) . a)
+  --  Law_idR   : {x, y : Obj c} -> (a : Hom x y) -> ArrowEq a (a . (id y))
+  --  Law_assoc : {x, y, z, w : Obj c} -> (p : Hom x y) -> (q : Hom y z) -> (r : Hom z w) 
   --              -> ArrowEq ((p . q) . r) (p . (q . r))
   (\f, x => sym $ appendNilRightNeutral (f x))
   (\f, x => lem_flatmap_id (f x)) 
