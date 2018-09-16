@@ -67,6 +67,7 @@ record CategoryAxEq (c : Category) where
   Law_idL   : {x, y : Obj c} -> (f : Hom x y) -> f = (IComp c (id y) f)
   Law_assoc : {x, y, z, w : Obj c} -> (f : Hom x y) -> (g : Hom y z) -> (h : Hom z w) 
               -> (IComp c ((.) h g) f) = (IComp c h (CatCore.(.) g f))
+  CheckEq   : {x, y : Obj c} -> (f, g : IHom c x y) -> (ArrowEq c f g) = (f = g)
 
 {-  Had trouble with (.) being interpreted as from Prelude.Basics (because (=) is heterogeneous),
     so changed to explicit `IComp c` -}
@@ -82,3 +83,36 @@ record CategoryAxEq (c : Category) where
 FunEx : (f,g : a->b) -> Type
 FunEx f g = (x : _) -> (f x) = (g x)
 
+---+-----------------------------------------------
+---+ Uniqueness and singleton
+---+-----------------------------------------------
+
+IsUniqueArr : {c : Category} -> {x, y : Obj c} -> (f : Hom x y) -> Type
+IsUniqueArr {x} {y} f = (g : Hom x y) -> f === g
+
+IsSingletonHom : {c : Category} -> (x, y : Obj c) -> Type
+IsSingletonHom x y = (f : Hom x y ** IsUniqueArr f)
+
+-- Any two arrows are equal
+IsUniqueHom : {c : Category} -> (x, y : Obj c) -> Type
+IsUniqueHom x y = (f, g : Hom x y) -> f === g
+
+IsSingletonHom' : {c : Category} -> (x, y : Obj c) -> Type
+IsSingletonHom' x y = (Hom x y, IsUniqueHom x y)
+
+---+-----------------------------------------------
+---+ Object Isomorphism
+---+-----------------------------------------------
+
+data IsomorphicObjs : {c : Category} -> (x, y : Obj c) -> Type where
+  MkIsoObjPf : {x, y : Obj c} -> (f : Hom x y) -> (g : Hom y x) -> 
+    (pgf : g . f === id x) -> (pfg : f . g === id y) 
+    -> IsomorphicObjs x y
+
+
+data IsomorphicIsos : {c : Category} -> {x, y : Obj c} -> (p, q : IsomorphicObjs x y) -> Type where
+  MkIsoIsoPf : {x, y : Obj c} -> (p1, p2 : IsomorphicObjs x y) 
+    -> (let (MkIsoObjPf f1 g1 _ _) = p1 in let (MkIsoObjPf f2 g2 _ _) = p2 in (f1 === f2, g1 === g2))
+    -> IsomorphicIsos p1 p2
+
+{- Note: records with implicit parameters don't work well -}

@@ -1,6 +1,7 @@
 module Categories
 
 import CatCore
+import CatConstructions
 import Data.List
 
 %default total
@@ -158,6 +159,7 @@ MonoidHomComp h23 h12 =
                  p23L = pcomp23 (f12 x) (f12 y)
                in trans p23R p23L) ))
 
+
 ---+--------------------------------------------------------
 ---+ The set of monoids form a category under homomorphism
 ---+--------------------------------------------------------
@@ -184,14 +186,14 @@ PLTypeCat = MkCategory
   (\a,b => a->b)          -- Hom  : Obj -> Obj -> Type
   (\_, x => x)            -- Id   : (x : Obj) -> Hom x x
   (\g,f => \x => g (f x)) -- Comp : {x, y, z : Obj} -> Hom y z -> Hom x y -> Hom x z
-  (=)                     -- ArrowEq : {x, y : Obj} -> (f, g : Hom x y) -> Type
+  FunEx                     -- ArrowEq : {x, y : Obj} -> (f, g : Hom x y) -> Type
   
 
 PLTypeCatAx : CategoryAx PLTypeCat
 PLTypeCatAx = MkCatAx
-  (\f => Refl)         -- Law_idR   : {x, y : Obj c} -> (f : Hom x y) -> f = ((.) f (id x))
-  (\f => Refl)         -- Law_idL   : {x, y : Obj c} -> (f : Hom x y) -> f = ((.) (id x) f)
-  (\f,g,h => Refl)     -- Law_assoc : {x, y, z, w : Obj c} -> (f : Hom x y) -> (g : Hom y z) -> (h : Hom z w) 
+  (\f, x => Refl)         -- Law_idR   : {x, y : Obj c} -> (f : Hom x y) -> f = ((.) f (id x))
+  (\f, x => Refl)         -- Law_idL   : {x, y : Obj c} -> (f : Hom x y) -> f = ((.) (id x) f)
+  (\f,g,h, x => Refl)     -- Law_assoc : {x, y, z, w : Obj c} -> (f : Hom x y) -> (g : Hom y z) -> (h : Hom z w) 
                        --              -> ((.) ((.) h g) f) = ((.) h ((.) g f))
 
 ---+-----------------------------------------------
@@ -263,3 +265,20 @@ FMCatAx = MkCatAx
   (\f, x => lem_flatmap_id (f x)) 
   (\f,g,h, x => lem_fm_assoc g h (f x)) -- OR: lem_fm_assoc' 
 
+---+-----------------------------------------------
+---+ Initial and Terminal Objects for PLTypes
+---+-----------------------------------------------
+
+lemVoidFuncsEq: {a : Type} -> (f, g : Void -> a) ->  FunEx f g
+lemVoidFuncsEq f g x impossible
+
+pl_ioPrf : IsInitial {c = PLTypeCat} Void
+pl_ioPrf = (\a => absurd, lemVoidFuncsEq)
+
+lemUnitFuncsEq: {a : Type} -> (f, g : a -> Unit) -> FunEx f g
+lemUnitFuncsEq f g x with (f x)
+  lemUnitFuncsEq f g x | () with (g x)
+    lemUnitFuncsEq f g x | () | () = Refl
+
+pl_toPrf : IsTerminal {c = PLTypeCat} ()
+pl_toPrf = (\a, x => (), lemUnitFuncsEq)
