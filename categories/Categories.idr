@@ -49,6 +49,66 @@ UnitCatAx = MkCatAx
   (\p,q,r => Refl) -- Law_assoc : (p : Hom x y) -> (q : Hom y z) -> (r : Hom z w) -> ArrowEq (p >>>(q>>>r)) ((p>>>q)>>>r)
   
 
+---+------------------------------------------
+---+ Orders
+---+------------------------------------------
+
+data IsTrue : Bool -> Type where
+  ItsTrue : (b : Bool) -> IsTrue b
+
+record DecideablePreorder where
+  constructor MkDecPreorder
+  Elem : Type
+  LTE : Elem -> Elem -> Bool
+  LTE_Reflexive : (x : Elem) -> IsTrue (LTE x x)
+  LTE_Transitive : {x, y, z : Elem} -> IsTrue (LTE x y) -> IsTrue (LTE y z) 
+                   -> IsTrue (LTE x z)
+  
+DecPreorderCat : (p : DecideablePreorder) -> Category
+DecPreorderCat p = MkCategory
+  (Elem p)
+  (\x, y => IsTrue (LTE p x y))
+  (\x => LTE_Reflexive p x)
+  (\g, f => LTE_Transitive p f g)
+  (=)
+--  Obj      : Type
+--  IHom     : (x, y : Obj) -> Type
+--  IId      : (x : Obj) -> IHom x x
+--  IComp    : {x, y, z : Obj} -> (g : IHom y z) -> (f : IHom x y) -> IHom x z
+--  IArrowEq : {x, y : Obj} -> (f, g : IHom x y) -> Type
+
+
+Relation : (a : Type) -> Type 
+Relation a = a -> a -> Type 
+
+RelReflexive : {a : Type} -> (r : Relation a) ->Type
+RelReflexive {a} r = (x : a) -> r x x
+
+RelTransitive : {a : Type} -> (r : Relation a) -> Type 
+RelTransitive {a} r = {x, y, z : a} -> r x y -> r y z -> r x z 
+  
+RelThin : {a : Type} -> (r : Relation a) -> Type
+RelThin {a} r = {x, y : a} -> (p, q : r x y) -> p = q
+
+record Preorder where
+  constructor MkPreorder
+  Elem : Type
+  Rel : Relation Elem
+  Rel_Reflexive : RelReflexive Rel
+  Rel_Transitive : RelTransitive Rel
+
+PreorderCat : (p : Preorder) -> Category
+PreorderCat p = MkCategory
+  (Elem p)
+  (Rel p)
+  (Rel_Reflexive p)
+  (\g, f => Rel_Transitive p f g)
+  (=)
+--  Obj      : Type
+--  IHom     : (x, y : Obj) -> Type
+--  IId      : (x : Obj) -> IHom x x
+--  IComp    : {x, y, z : Obj} -> (g : IHom y z) -> (f : IHom x y) -> IHom x z
+--  IArrowEq : {x, y : Obj} -> (f, g : IHom x y) -> Type
 --------------------------------------------------------------------------------
 -- Monoids & Monoid-related categories
 --
@@ -266,14 +326,8 @@ FMCatAx = MkCatAx
   (\f,g,h, x => lem_fm_assoc g h (f x)) -- OR: lem_fm_assoc' 
 
 ---+-----------------------------------------------
----+ Initial and Terminal Objects for PLTypes
+---+ Terminal and Initial Objects for PLTypes
 ---+-----------------------------------------------
-
-lemVoidFuncsEq: {a : Type} -> (f, g : Void -> a) ->  FunEx f g
-lemVoidFuncsEq f g x impossible
-
-pl_ioPrf : IsInitial {c = PLTypeCat} Void
-pl_ioPrf = (\a => absurd, lemVoidFuncsEq)
 
 lemUnitFuncsEq: {a : Type} -> (f, g : a -> Unit) -> FunEx f g
 lemUnitFuncsEq f g x with (f x)
@@ -282,3 +336,10 @@ lemUnitFuncsEq f g x with (f x)
 
 pl_toPrf : IsTerminal {c = PLTypeCat} ()
 pl_toPrf = (\a, x => (), lemUnitFuncsEq)
+
+lemVoidFuncsEq: {a : Type} -> (f, g : Void -> a) ->  FunEx f g
+lemVoidFuncsEq f g x impossible
+
+pl_ioPrf : IsInitial {c = PLTypeCat} Void
+pl_ioPrf = (\a => absurd, lemVoidFuncsEq)
+
