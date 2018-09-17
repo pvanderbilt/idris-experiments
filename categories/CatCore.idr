@@ -14,11 +14,11 @@ module CatCore
 
 record Category where
   constructor MkCategory
-  Obj     : Type
-  IHom    : (x, y : Obj) -> Type
-  IId     : (x : Obj) -> IHom x x
-  IComp   : {x, y, z : Obj} -> (g : IHom y z) -> (f : IHom x y) -> IHom x z
-  ArrowEq : {x, y : Obj} -> (f, g : IHom x y) -> Type
+  Obj      : Type
+  IHom     : (x, y : Obj) -> Type
+  IId      : (x : Obj) -> IHom x x
+  IComp    : {x, y, z : Obj} -> (g : IHom y z) -> (f : IHom x y) -> IHom x z
+  IArrowEq : {x, y : Obj} -> (f, g : IHom x y) -> Type
   
 
 -- ACCESSORS
@@ -41,7 +41,7 @@ id {c} x = IId c x
 -- Arrow equality in c: `f === g` means that c has that f and g are the same arrow 
 infixr 1 ===
 (===) : {c : Category} -> {x, y : Obj c} -> (f, g : IHom c x y) -> Type
-(===) {c} f g = ArrowEq c f g
+(===) {c} f g = IArrowEq c f g
 
 
 ---+--------------------------------------
@@ -67,7 +67,7 @@ record CategoryAxEq (c : Category) where
   Law_idL   : {x, y : Obj c} -> (f : Hom x y) -> f = (IComp c (id y) f)
   Law_assoc : {x, y, z, w : Obj c} -> (f : Hom x y) -> (g : Hom y z) -> (h : Hom z w) 
               -> (IComp c ((.) h g) f) = (IComp c h (CatCore.(.) g f))
-  CheckEq   : {x, y : Obj c} -> (f, g : IHom c x y) -> (ArrowEq c f g) = (f = g)
+  CheckEq   : {x, y : Obj c} -> (f, g : IHom c x y) -> (IArrowEq c f g) = (f = g)
 
 {-  Had trouble with (.) being interpreted as from Prelude.Basics (because (=) is heterogeneous),
     so changed to explicit `IComp c` -}
