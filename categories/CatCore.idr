@@ -83,6 +83,15 @@ record CategoryAxEq (c : Category) where
 FunEx : (f,g : a->b) -> Type
 FunEx f g = (x : _) -> (f x) = (g x)
 
+
+---+-----------------------------------------------
+---+ FlatEq: Equality where all instances are equal
+---+-----------------------------------------------
+
+data FlatEq : {a : Type} -> (f, g : a) -> Type where
+  TheyBEq :  {a : Type} -> (f, g : a) -> FlatEq f g
+
+
 ---+-----------------------------------------------
 ---+ Uniqueness and singleton
 ---+-----------------------------------------------
@@ -99,6 +108,9 @@ IsUniqueHom x y = (f, g : Hom x y) -> f === g
 
 IsSingletonHom' : {c : Category} -> (x, y : Obj c) -> Type
 IsSingletonHom' x y = (Hom x y, IsUniqueHom x y)
+
+IsThinCat : (c : Category) -> Type
+IsThinCat c = (x, y : Obj c) -> IsUniqueHom x y
 
 ---+-----------------------------------------------
 ---+ Object Isomorphism

@@ -103,12 +103,26 @@ PreorderCat p = MkCategory
   (Rel p)
   (Rel_Reflexive p)
   (\g, f => Rel_Transitive p f g)
-  (=)
+  (\f, g => FlatEq f g)
 --  Obj      : Type
---  IHom     : (x, y : Obj) -> Type
---  IId      : (x : Obj) -> IHom x x
---  IComp    : {x, y, z : Obj} -> (g : IHom y z) -> (f : IHom x y) -> IHom x z
---  IArrowEq : {x, y : Obj} -> (f, g : IHom x y) -> Type
+--  Hom     : (x, y : Obj) -> Type
+--  Id      : (x : Obj) -> Hom x x
+--  Comp    : {x, y, z : Obj} -> (g : Hom y z) -> (f : Hom x y) -> Hom x z
+--  ArrowEq : {x, y : Obj} -> (f, g : Hom x y) -> Type
+
+PreorderCatAx :  (p : Preorder) -> CategoryAx (PreorderCat p)
+PreorderCatAx p = MkCatAx (\f => TheyBEq _ _) (\f => TheyBEq _ _) (\f,g,h => TheyBEq _ _)
+--  Law_idR   : (f : Hom x y) -> f === f . (id x)
+--  Law_idL   : (f : Hom x y) -> f === (id y) . f
+--  Law_assoc : (f, g, h : _) -> (h . g) . f === h . (g . f)
+
+-- Preorder-based categories are thin, in that each HOM has at most one arrow
+PreorderCatsRThin : (p : Preorder) -> IsThinCat (PreorderCat p)
+PreorderCatsRThin p x y f g = TheyBEq f g
+
+
+
+
 --------------------------------------------------------------------------------
 -- Monoids & Monoid-related categories
 --
@@ -227,7 +241,9 @@ MonoidHomComp h23 h12 =
 MonoidsCat : Category
 MonoidsCat = MkCategory Monoid MonoidHom MonoidIdHom MonoidHomComp (=)
 
-
+{- Not done -}
+-- MonoidsCatAx : CategoryAx MonoidsCat
+-- MonoidsCatAx = MkCatAx (\f1 => ?Law_idR) ?Law_idL ?Law_assoc
 
 --------------------------------------------------------------------------------
 -- Categories: 
@@ -246,7 +262,7 @@ PLTypeCat = MkCategory
   (\a,b => a->b)          -- Hom  : Obj -> Obj -> Type
   (\_, x => x)            -- Id   : (x : Obj) -> Hom x x
   (\g,f => \x => g (f x)) -- Comp : {x, y, z : Obj} -> Hom y z -> Hom x y -> Hom x z
-  FunEx                     -- ArrowEq : {x, y : Obj} -> (f, g : Hom x y) -> Type
+  FunEx                   -- ArrowEq : {x, y : Obj} -> (f, g : Hom x y) -> Type
   
 
 PLTypeCatAx : CategoryAx PLTypeCat

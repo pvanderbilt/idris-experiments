@@ -5,6 +5,17 @@ import CatCore
 %access public export
 %default total
 
+---+-----------------------------------------------
+---+ Mono- and Epimorphisms
+---+-----------------------------------------------
+
+IsMonic : {c : Category} -> {y, z : Obj c} -> Hom y z -> Type
+IsMonic {c} {y} {z} g = {x : Obj c} -> (f1, f2 : Hom x y) -> 
+           (g . f1) === (g . f2) -> f1 === f2
+
+IsEpic : {c : Category} -> {x, y : Obj c} -> Hom x y -> Type
+IsEpic {c} {x} {y} f = {z : Obj c} -> (g1, g2 : Hom y z) -> 
+           (g1 . f) === (g2 . f) -> g1 === g2
 
 ---+-----------------------------------------------
 ---+ Terminal and Initial Objects
@@ -57,8 +68,8 @@ TheTerminalFor : (c : Category) -> Type
 TheTerminalFor c = (x : Obj c ** IsTerminal x)
 
 -- TerminalObj c yields the terminal object registered by above
-TerminalObj : (c : Category) -> {auto prf : TheTerminalFor c} -> Obj c
-TerminalObj c {prf = (x ** pf)} = x
+terminalObj : (c : Category) -> {auto prf : TheTerminalFor c} -> Obj c
+terminalObj c {prf = (x ** pf)} = x
 
-TerminalObjPrf : (c : Category) -> {auto prf : TheTerminalFor c} -> IsTerminal (TerminalObj c)
-TerminalObjPrf c {prf = (x ** pf)} = pf
+terminalObjPrf : (c : Category) -> {auto prf : TheTerminalFor c} -> IsTerminal (terminalObj c)
+terminalObjPrf c {prf = (x ** pf)} = pf
