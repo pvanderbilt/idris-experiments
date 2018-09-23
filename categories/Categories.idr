@@ -20,33 +20,32 @@ import Data.List
 
 EmptyCat : Category
 EmptyCat = MkCategory 
-  Void                -- Obj : Type
-  (\x,y => Void)      -- Hom    : Obj -> Obj -> Type
-  (\p => absurd p)    -- Id  : (x : Obj) -> Hom x x
-  (\p,q => absurd p)  -- Comp : (x, y, z : Obj) -> Hom y z -> Hom x y -> Hom x z
-  (\p,q => p=q)
+  Void                 -- Obj : Type
+  (\x,y => Void)       -- Hom : (x, y : Obj) -> Type
+  (\x => absurd x)     -- Id : (x : Obj) -> Hom x x
+  (\g,f => absurd g)   -- Comp : (g : Hom y z) -> (f : Hom x y) -> Hom x z
+  (\f,g => f=g)        -- ArrowEq : (f, g : Hom x y) -> Type
   
 EmptyCatAx : CategoryAx EmptyCat
 EmptyCatAx = MkCatAx 
-  (\p => absurd p)     -- Law_idR : {x, y : Obj c} -> (a : Hom x y) -> ArrowEq a ((id x) >>> a)
-  (\q => absurd q)     -- Law_idL : {x, y : Obj c} -> (a : Hom x y) -> ArrowEq a (a >>> (id y))
-  (\p,q,r => absurd p) -- Law_assoc : (p : Hom x y) -> (q : Hom y z) -> (r : Hom z w) 
-                       --    -> ArrowEq (p >>>(q>>>r)) ((p>>>q)>>>r)
+  (\f => absurd f)     -- Law_idR : (f : Hom x y) -> f === f . (id x)
+  (\f => absurd f)     -- Law_idL : (f : Hom x y) -> f === (id y) . f
+  (\f,g,h => absurd f) -- Law_assoc : (f, g, h : _) -> (h . g) . f === h . (g . f)
 
 UnitCat : Category
 UnitCat = MkCategory 
   ()                 -- Obj : Type
-  (\_,_ => ())       -- Hom    : Obj -> Obj -> Type
-  (\_ => ())         -- Id  : (x : Obj) -> Hom x x
-  (\_,_ => ())       -- Comp : (x, y, z : Obj) -> Hom y z -> Hom x y -> Hom x z
-  (\p,q => p=q)      -- ArrowEq : {x, y : Obj c} -> (f, g : Hom x y) -> Type
+  (\_,_ => ())       -- Hom : (x, y : Obj) -> Type
+  (\_ => ())         -- Id : (x : Obj) -> Hom x x
+  (\_,_ => ())       -- Comp : (g : Hom y z) -> (f : Hom x y) -> Hom x z
+  (\f,g => f=g)      -- ArrowEq : (f, g : Hom x y) -> Type
 
 
 UnitCatAx : CategoryAx UnitCat
 UnitCatAx = MkCatAx 
-  (\() => Refl)    -- Law_idR : {x, y : Obj c} -> (a : Hom x y) -> ArrowEq a ((id x) >>> a)
-  (\() => Refl)    -- Law_idL : {x, y : Obj c} -> (a : Hom x y) -> ArrowEq a (a >>> (id y))
-  (\p,q,r => Refl) -- Law_assoc : (p : Hom x y) -> (q : Hom y z) -> (r : Hom z w) -> ArrowEq (p >>>(q>>>r)) ((p>>>q)>>>r)
+  (\() => Refl)      -- Law_idR : (f : Hom x y) -> f === f . (id x)
+  (\() => Refl)      -- Law_idL : (f : Hom x y) -> f === (id y) . f
+  (\f,g,h => Refl)   -- Law_assoc : (f, g, h : _) -> (h . g) . f === h . (g . f)
   
 
 ---+------------------------------------------
@@ -66,16 +65,11 @@ record DecideablePreorder where
   
 DecPreorderCat : (p : DecideablePreorder) -> Category
 DecPreorderCat p = MkCategory
-  (Elem p)
-  (\x, y => IsTrue (LTE p x y))
-  (\x => LTE_Reflexive p x)
-  (\g, f => LTE_Transitive p f g)
-  (=)
---  Obj      : Type
---  IHom     : (x, y : Obj) -> Type
---  IId      : (x : Obj) -> IHom x x
---  IComp    : {x, y, z : Obj} -> (g : IHom y z) -> (f : IHom x y) -> IHom x z
---  IArrowEq : {x, y : Obj} -> (f, g : IHom x y) -> Type
+  (Elem p)                         -- Obj : Type
+  (\x, y => IsTrue (LTE p x y))    -- Hom : (x, y : Obj) -> Type
+  (\x => LTE_Reflexive p x)        -- Id : (x : Obj) -> Hom x x
+  (\g,f => LTE_Transitive p f g)   -- Comp : (g : Hom y z) -> (f : Hom x y) -> Hom x z
+  (=)                              -- ArrowEq : (f, g : Hom x y) -> Type
 
 
 Relation : (a : Type) -> Type 
@@ -87,9 +81,6 @@ RelReflexive {a} r = (x : a) -> r x x
 RelTransitive : {a : Type} -> (r : Relation a) -> Type 
 RelTransitive {a} r = {x, y, z : a} -> r x y -> r y z -> r x z 
   
-RelThin : {a : Type} -> (r : Relation a) -> Type
-RelThin {a} r = {x, y : a} -> (p, q : r x y) -> p = q
-
 record Preorder where
   constructor MkPreorder
   Elem : Type
@@ -99,22 +90,18 @@ record Preorder where
 
 PreorderCat : (p : Preorder) -> Category
 PreorderCat p = MkCategory
-  (Elem p)
-  (Rel p)
-  (Rel_Reflexive p)
-  (\g, f => Rel_Transitive p f g)
-  (\f, g => FlatEq f g)
---  Obj      : Type
---  Hom     : (x, y : Obj) -> Type
---  Id      : (x : Obj) -> Hom x x
---  Comp    : {x, y, z : Obj} -> (g : Hom y z) -> (f : Hom x y) -> Hom x z
---  ArrowEq : {x, y : Obj} -> (f, g : Hom x y) -> Type
+  (Elem p)                         -- Obj : Type
+  (Rel p)                          -- Hom : (x, y : Obj) -> Type
+  (Rel_Reflexive p)                -- Id : (x : Obj) -> Hom x x
+  (\g, f => Rel_Transitive p f g)  -- Comp : (g : Hom y z) -> (f : Hom x y) -> Hom x z
+  (\f, g => FlatEq f g)            -- ArrowEq : (f, g : Hom x y) -> Type
 
 PreorderCatAx :  (p : Preorder) -> CategoryAx (PreorderCat p)
-PreorderCatAx p = MkCatAx (\f => TheyBEq _ _) (\f => TheyBEq _ _) (\f,g,h => TheyBEq _ _)
---  Law_idR   : (f : Hom x y) -> f === f . (id x)
---  Law_idL   : (f : Hom x y) -> f === (id y) . f
---  Law_assoc : (f, g, h : _) -> (h . g) . f === h . (g . f)
+PreorderCatAx p = MkCatAx 
+  (\f => TheyBEq _ _)              -- Law_idR : (f : Hom x y) -> f === f . (id x)
+  (\f => TheyBEq _ _)              -- Law_idL : (f : Hom x y) -> f === (id y) . f
+  (\f,g,h => TheyBEq _ _)          -- Law_assoc : (f, g, h : _) -> (h . g) . f === h . (g . f)
+
 
 -- Preorder-based categories are thin, in that each HOM has at most one arrow
 PreorderCatsRThin : (p : Preorder) -> IsThinCat (PreorderCat p)
@@ -154,16 +141,16 @@ record MonoidAx (m : Monoid) where
 MonoidCat : (m : Monoid) -> Category
 MonoidCat m = MkCategory 
   ()                   -- Obj : Type
-  (\_,_ => (S m))      -- Hom    : Obj -> Obj -> Type
-  (\_ => (E m))        -- Id  : (x : Obj) -> Hom x x
-  (\p,q => (Op m p q)) -- Comp : (x, y, z : Obj) -> Hom y z -> Hom x y -> Hom x z
-  (\a,b => a=b)        -- ArrowEq : {x, y : Obj c} -> (Hom x y) -> (Hom x y) -> Ty
+  (\_,_ => (S m))      -- Hom : (x, y : Obj) -> Type
+  (\_ => (E m))        -- Id : (x : Obj) -> Hom x x
+  (\g,f => (Op m g f)) -- Comp : (g : Hom y z) -> (f : Hom x y) -> Hom x z
+  (\f,g => f=g)        -- ArrowEq : (f, g : Hom x y) -> Type
 
 MonoidCatAx : (m : Monoid) ->  (max : MonoidAx m) -> CategoryAx (MonoidCat m)
 MonoidCatAx m max = MkCatAx 
-  (law_ER max)         -- Law_idR : {x, y : Obj c} -> (a : Hom x y) -> ArrowEq c a ((id x) >>> a)
-  (law_EL max)         -- Law_idL : {x, y : Obj c} -> (a : Hom x y) -> ArrowEq c a (a >>> (id y))
-  (law_assoc max)      -- Law_assoc : (a,b,c : _) -> ArrowEq (a>>>(b>>>c)) ((a>>>b)>>>c)
+  (law_ER max)         -- Law_idR : (f : Hom x y) -> f === f . (id x)
+  (law_EL max)         -- Law_idL : (f : Hom x y) -> f === (id y) . f
+  (law_assoc max)      -- Law_assoc : (f, g, h : _) -> (h . g) . f === h . (g . f)
 
 ---+------------------------------------------
 ---+ Any 1 object category is a monoid
@@ -258,19 +245,18 @@ MonoidsCat = MkCategory Monoid MonoidHom MonoidIdHom MonoidHomComp (=)
 
 PLTypeCat : Category
 PLTypeCat = MkCategory 
-  Type                    -- Obj  : Type
-  (\a,b => a->b)          -- Hom  : Obj -> Obj -> Type
-  (\_, x => x)            -- Id   : (x : Obj) -> Hom x x
-  (\g,f => \x => g (f x)) -- Comp : {x, y, z : Obj} -> Hom y z -> Hom x y -> Hom x z
-  FunEx                   -- ArrowEq : {x, y : Obj} -> (f, g : Hom x y) -> Type
+  Type                    -- Obj : Type
+  (\a,b => a->b)          -- Hom : (x, y : Obj) -> Type
+  (\a => \x => x)         -- Id : (x : Obj) -> Hom x x
+  (\g,f, x => g (f x))    -- Comp : (g : Hom y z) -> (f : Hom x y) -> Hom x z
+  FunEx                   -- ArrowEq : (f, g : Hom x y) -> Type
   
 
 PLTypeCatAx : CategoryAx PLTypeCat
 PLTypeCatAx = MkCatAx
-  (\f, x => Refl)         -- Law_idR   : {x, y : Obj c} -> (f : Hom x y) -> f = ((.) f (id x))
-  (\f, x => Refl)         -- Law_idL   : {x, y : Obj c} -> (f : Hom x y) -> f = ((.) (id x) f)
-  (\f,g,h, x => Refl)     -- Law_assoc : {x, y, z, w : Obj c} -> (f : Hom x y) -> (g : Hom y z) -> (h : Hom z w) 
-                       --              -> ((.) ((.) h g) f) = ((.) h ((.) g f))
+  (\f, x => Refl)         -- Law_idR   : (f : Hom x y) -> f === f . (id x)
+  (\f, x => Refl)         -- Law_idL   : (f : Hom x y) -> f === (id y) . f
+  (\f,g,h, x => Refl)     -- Law_assoc : (f, g, h : _) -> (h . g) . f === h . (g . f)
 
 ---+-----------------------------------------------
 ---+ Category with PL-types, morphisms A => List(B)
@@ -285,11 +271,11 @@ flatmap f (x :: xs) = (f x) ++ (flatmap f xs)
 
 FMCat : Category
 FMCat = MkCategory 
-  Type                           -- Obj  : Type
-  (\a,b => a -> List b)          -- Hom  : Obj -> Obj -> Type
-  (\a, x => [x])                 -- Id   : (x : Obj) -> Hom x x
-  (\g,f, x => flatmap g (f x))   -- Comp : {x, y, z : Obj} -> Hom y z -> Hom x y -> Hom x z
-  FunEx                          -- ArrowEq : {x, y : Obj} -> (f, g : Hom x y) -> Type
+  Type                           -- Obj : Type
+  (\a,b => a -> List b)          -- Hom : (x, y : Obj) -> Type
+  (\a, x => [x])                 -- Id : (x : Obj) -> Hom x x
+  (\g,f, x => flatmap g (f x))   -- Comp : (g : Hom y z) -> (f : Hom x y) -> Hom x z
+  FunEx                          -- ArrowEq : (f, g : Hom x y) -> Type
 
 
 ---+-----------------------------------------------
@@ -319,6 +305,14 @@ lem_fm_assoc g h (y :: ys) = let
                              in trans (cong ih) p1
 
 
+FMCatAx : CategoryAx FMCat
+FMCatAx = MkCatAx
+  (\f, x => sym $ appendNilRightNeutral (f x))  --  Law_idL   : (f : Hom x y) -> f === f . (id x)
+  (\f, x => lem_flatmap_id (f x))               --  Law_idR   : (f : Hom x y) -> f === (id y) . f
+  (\f,g,h, x => lem_fm_assoc g h (f x))         --  Law_assoc : (f, g, h : _) -> (h . g) . f === h . (g . f)
+
+
+-- Alternate definition allowing `lem_fm_assoc'` to be the value of the last line
 -- flatmap is associative (using function equality via FunEx):
 -- (f o (g o h)) = ((f o g) o h) <=> (\x => flatmap (g o h) (f x)) = (\x => flatmap h ((f o g) x))
 lem_fm_assoc' : (f : a -> List b) -> (g : b -> List c) -> (h : c -> List d)  
@@ -331,15 +325,6 @@ lem_fm_assoc' f g h x with (f x)
                                       in trans (cong ih) p1
 
 
-FMCatAx : CategoryAx FMCat
-FMCatAx = MkCatAx
-  --  Law_idL   : {x, y : Obj c} -> (a : Hom x y) -> ArrowEq a ((id x) . a)
-  --  Law_idR   : {x, y : Obj c} -> (a : Hom x y) -> ArrowEq a (a . (id y))
-  --  Law_assoc : {x, y, z, w : Obj c} -> (p : Hom x y) -> (q : Hom y z) -> (r : Hom z w) 
-  --              -> ArrowEq ((p . q) . r) (p . (q . r))
-  (\f, x => sym $ appendNilRightNeutral (f x))
-  (\f, x => lem_flatmap_id (f x)) 
-  (\f,g,h, x => lem_fm_assoc g h (f x)) -- OR: lem_fm_assoc' 
 
 ---+-----------------------------------------------
 ---+ Terminal and Initial Objects for PLTypes
