@@ -1,9 +1,13 @@
+module ArrowCat
 
 import CatCore
 
-{-
 --------------------------------------------------------------------------------
 -- A Category based on arrows and its mapping
+--   However, I now think this is misguided because there isn't necessarily
+--   object equality for categories.  I think Dom should be more like
+--      Dom : Arrow -> Obj -> Type
+--   and so on.
 --------------------------------------------------------------------------------
 
 ---+--------------------------------------
@@ -41,13 +45,14 @@ Arrow2Reg ac = MkCategory
                 (pcd , pcc) = CompProp ac f g fog peq Refl
                 (pfogd , pfogc) = (trans pcd pgd , trans pcc pfc)
               in (fog ** (pfogd , pfogc)) )
+  (=)
 
 {- alternate ending (GOOD)                              
                 fogProp = CompProp ac f g fog peq Refl
               in rewrite (sym pgd) 
               in rewrite (sym pfc) 
               in (fog ** fogProp) )
--}
+
 
 ---+------------------------------------------------------------
 ---+  Mapping the regular category to an arrow one
