@@ -1,6 +1,7 @@
+module Cat2
 
-import Data.List
 import Category
+import Data.List
 
 %default total
 
@@ -51,7 +52,6 @@ FMCat = MkCategory
   (\a,b => a -> List b)          -- Hom  : Obj -> Obj -> Type
   (\a, x => [x])                 -- Id   : (x : Obj) -> Hom x x
   (\g,f, x => flatmap g (f x))   -- Comp : {x, y, z : Obj} -> Hom y z -> Hom x y -> Hom x z
- 
 
 
 ---+-----------------------------------------------
