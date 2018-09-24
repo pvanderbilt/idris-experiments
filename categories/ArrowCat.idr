@@ -23,7 +23,8 @@ record ArrowCategory where
   Id       : (x : Obj) -> Arrow
   IdProp   : (x : Obj) -> (Dom (Id x) = x , Cod (Id x) = x)
   Comp     : (f, g : Arrow) -> {auto peq : Cod g = Dom f} -> Arrow
-  CompProp : (f, g, fog : Arrow) -> (peq : Cod g = Dom f) -> (fog = Comp f g {peq=peq}) -> (Dom fog = Dom g , Cod fog = Cod f)
+  CompProp : (f, g, fog : Arrow) -> (peq : Cod g = Dom f) -> (fog = Comp f g {peq=peq}) 
+             -> (Dom fog = Dom g , Cod fog = Cod f)
 
 
 ---+------------------------------------------------------
@@ -52,32 +53,67 @@ Arrow2Reg ac = MkCategory
               in rewrite (sym pgd) 
               in rewrite (sym pfc) 
               in (fog ** fogProp) )
-
+-}
 
 ---+------------------------------------------------------------
 ---+  Mapping the regular category to an arrow one
 ---+    where arrows are triples of the form (x, y, a : Hom x y)
 ---+------------------------------------------------------------
 
-{- -- NOT FINISHED
+R2A_Obj : Category -> Type
+R2A_Obj c = Obj c
+
+R2A_Arrow : Category -> Type
+R2A_Arrow c = (x : Obj c ** y : Obj c ** IHom c x y)
+
+R2A_Dom : {c : Category} -> R2A_Arrow c -> R2A_Obj c
+R2A_Dom a = fst a
+
+R2A_Cod : {c : Category} -> R2A_Arrow c -> R2A_Obj c
+R2A_Cod a = fst $ snd a
+
+R2A_Id : {c : Category} -> R2A_Obj c -> R2A_Arrow c
+R2A_Id x = (x ** x ** id x)
+
+R2A_IdProp : {c : Category} -> (x : R2A_Obj c) -> (R2A_Dom (R2A_Id x) = x, R2A_Cod (R2A_Id x) = x)
+R2A_IdProp x = (Refl, Refl)
+
+R2A_Comp : {c : Category} -> (f, g : R2A_Arrow c) -> {auto peq :  R2A_Cod g =  R2A_Dom f} ->  R2A_Arrow c
+R2A_Comp f g {peq} = let (fd ** (fc ** fa)) = f in 
+                     let (gd ** gc ** ga) = g in 
+                     let Refl = peq in 
+                     (gd ** fc ** (fa . ga))
+
+R2A_CompProp : {c : Category} -> (f, g, fog : R2A_Arrow c) -> (peq : R2A_Cod g = R2A_Dom f)
+                  -> (fog = R2A_Comp f g {peq=peq}) -> (R2A_Dom fog = R2A_Dom g , R2A_Cod fog = R2A_Cod f)
+R2A_CompProp f g fog peq prf = 
+  let (fd ** (fc ** fa)) = f in 
+  let (gd ** gc ** ga) = g in 
+  let Refl = peq in 
+    (cong {f = fst} prf, cong {f = (\fog => DPair.fst (DPair.snd fog))} prf)
+
 Reg2Arrow : Category -> ArrowCategory
+Reg2Arrow c = MkArrowCategory (R2A_Obj c) (R2A_Arrow c) R2A_Dom R2A_Cod R2A_Id R2A_IdProp R2A_Comp R2A_CompProp
+
+{-  The error messages when doing it this way were too confusing,
+    so changed to above.
 Reg2Arrow c = MkArrowCategory
   -- Obj      : Type
   (Obj c)
   -- Arrow    : Type
-  (x : Obj c ** y : Obj c ** Hom c x y)
+  (x : Obj c ** y : Obj c ** Hom {c=c} x y)
   -- Dom      : Arrow -> Obj
-  (\a => let (x ** y ** h) = a in x)
+  (\a => fst a) -- (\a => let (x ** y ** h) = a in x)
   -- Cod      : Arrow -> Obj
-  ?c -- (\(_ ** y ** _) => y)
+  (\a => fst $ snd a) -- ?y -- (\a => let (x ** y ** h) = a in y)
   -- Id       : (x : Obj) -> Arrow
-  ?id -- (\x => (x ** x ** Id c x))
+  (\x => (x ** x ** Category.IId c x))
   -- IdProp   : (x : Obj) -> (Dom (Id x) = x , Cod (Id x) = x)
-  ?idp -- (\x => (Refl, Refl))
+  (\x => (Refl, Refl))
   -- Comp     : (f, g : Arrow) -> {auto peq : Cod g = Dom f} -> Arrow
-  ?hc -- (\f, g, peq => let ((fd, fc) ** fa) = f in let ((gd, gc) ** ga) = g in ((gd, fc) ** Comp c fa ga))
+  (\f, g, peq => ((fst g) ** (fst $ snd f) ** IComp c (snd $ snd f) (snd $ snd g)))
+    -- let (fd ** (fc ** fa)) = f in let (gd ** gc ** ga) = g in 
   -- CompProp : (f, g, fog : Arrow) -> (peq : Cod g = Dom f) -> (fog = Comp f g {peq=peq}) -> (Dom fog = Dom g , Cod fog = Cod f)
   ?hcp
 
--}
 -}
