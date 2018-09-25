@@ -17,6 +17,8 @@ mostly in 2018.
 	* `CatConstructions.idr`: Some constructions about categories and
       their components.  Includes monomorphisms and epimorphisms and terminal and
       initial objects.
+	* `ArrowCat.idr`: A definition based on a plain arrow type and `Dom`
+      and `Cod` functions instead of `Hom`.
 * `projects/`: Experiments about proving various things (most recent first):
     * `Mod2`: Made a start at proving that `mod n` forms a group.
 	I'm stuck at proving any non-trivial axiom.  (Aug 2018)
