@@ -4,10 +4,12 @@ import CatCore
 
 --------------------------------------------------------------------------------
 -- A Category based on arrows and its mapping
---   However, I now think this is misguided because there isn't necessarily
---   object equality for categories.  I think Dom should be more like
+-- However, this may be misguided because there isn't necessarily
+--   object equality for categories, as mentioned by Milewski in a video.  
+--   If so, I think Dom should be more like
 --      Dom : Arrow -> Obj -> Type
 --   and so on.
+-- However, both Awodey and Pierce define categories this way.
 --------------------------------------------------------------------------------
 
 ---+--------------------------------------
@@ -25,6 +27,24 @@ record ArrowCategory where
   Comp     : (g, f : Arrow) -> {auto peq : Cod f = Dom g} -> Arrow
   CompProp : (g, f, gof : Arrow) -> (peq : Cod f = Dom g) -> (gof = Comp g f {peq=peq}) 
              -> (Dom gof = Dom f , Cod gof = Cod g)
+
+record ArrowCatAx (ac : ArrowCategory) where
+  constructor MkArrCatAx
+  Law_idR   : (f : Arrow ac) -> f = Comp ac f (Id ac (Dom ac f)) 
+                                         {peq = snd (IdProp ac (Dom ac f))} 
+                                            
+  Law_idL   : (f : Arrow ac) -> f = Comp ac (Id ac (Cod ac f)) f
+                                         {peq = sym $ fst (IdProp ac (Cod ac f))} 
+
+  Law_assoc : (f,g,h : Arrow ac) -> (pfg : Cod ac f = Dom ac g) -> (pgh : Cod ac g = Dom ac h)
+              -> let 
+                   hog = (Comp ac h g)
+                   qhg = CompProp ac h g hog pgh Refl 
+                   rhog_f = trans pfg (sym $ fst qhg)
+                   gof = (Comp ac g f)
+                   qgf = CompProp ac g f gof pfg Refl 
+                   rh_gof = trans (snd qgf) pgh
+                 in (Comp ac hog f {peq=rhog_f}) = (Comp ac h gof {peq=rh_gof})
 
 
 ---+------------------------------------------------------
