@@ -6,16 +6,22 @@ Languages Meetup](https://www.meetup.com/SF-Types-Theorems-and-Programming-Langu
 mostly in 2018.
 
 ## Contents
-
+* `categories/`: Experiments about representing category theory in
+  Idris (Sept 2018, extending work from July&Aug.)
+    * `CatCore.idr`: Definitions of categories and their axioms and
+    some useful properties.
+	* `Categories.idr`: Definitions of some categories, including empty
+    and unit ones and those based on preorders and monoids.
+	Also categories of (programming language) types and functions (aka **Set**)
+	and where the arrows represent  (`a -> List b`) functions.
+	* `CatConstructions.idr`: Some constructions about categories and
+      their components.  Includes monomorphisms and epimorphisms and terminal and
+      initial objects.
 * `projects/`: Experiments about proving various things (most recent first):
-	* `Cat2`: Used `Category.idr` (see below) to implement the categories
-    of types and functions (aka **Set**)
-	and where functions are (`a -> List b`). (Aug 2018)
     * `Mod2`: Made a start at proving that `mod n` forms a group.
 	I'm stuck at proving any non-trivial axiom.  (Aug 2018)
     * `Mod1`:  Some previous attempts at `mod n`, where I represented it by `(k : Nat ** LT k n)`
 	and `(k : Nat ** IsTrue(k<n))`.
-    * `Category`: Defined some category theory in Idris. (July 2018)
     * `Fact`: Defined a type `Fact` that allows asserting arbitrary things.
     * `EqAx`: Defined an `EqAx` interface which adds axioms to the `Eq` interface.
     	 Also defined an interface that extends `Eq` for cases where it is equivalent to `Id`.

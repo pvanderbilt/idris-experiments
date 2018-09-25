@@ -85,9 +85,12 @@ EmptyCatAx = MkCatAx
 --------------------------------------------------------------------------------
 -- Older versions, in a more convenient form (but had trouble getting them to type)
 --------------------------------------------------------------------------------
- 
+{- Got errors like
+     Can't infer argument x to Category.UnitCatAx, law_idR, 
+     Can't infer argument y to Category.UnitCatAx, law_idR, 
+     Can't infer argument x1 to Category.UnitCatAx, law_idR, 
+     ... and 23 more ...
 
-{-
 UnitCat : Category
 UnitCat = MkCategory obj hom id comp
   where
@@ -119,7 +122,23 @@ UnitCatAx = MkCatAx objEq arrowEq ?lawIdL -- (\x,y,a => Refl) -- ?h
 -- (\x,y => x=y)
 
 -}
- 
+
+{- This one works, but the axiom part is still stuck -}
+
+UnitCat' : Category
+UnitCat' = MkCategory obj hom id comp
+  where
+    obj : Type
+    obj = ()
+    hom : obj -> obj -> Type
+    hom _ _ = ()
+    id : (x : obj) -> hom x x
+    id _ = ()
+    comp : () -> () -> ()
+    comp _ _ = ()
+    --comp : (x1, x2, x3 : obj) -> hom x1 x2 -> hom x2 x3 -> hom x1 x3
+    --comp _ _ _ g f = ()
+
 --------------------------------------------------------------------------------
 -- Monoids & Monoid-related categories
 --
