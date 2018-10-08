@@ -360,7 +360,7 @@ PFCat = MkCategory
   Type                           -- Obj : Type
   (\a,b => a -> Maybe b)         -- Hom : (x, y : Obj) -> Type
   (\a, x => Just x)              -- Id : (x : Obj) -> Hom x x
-  (\g,f, x => mchain g f x)    -- Comp : (g : Hom y z) -> (f : Hom x y) -> Hom x z
+  (\g,f, x => mchain g f x)      -- Comp : (g : Hom y z) -> (f : Hom x y) -> Hom x z
   FunEx                          -- ArrowEq : (f, g : Hom x y) -> Type
 
 PFCatAx : CategoryAx PFCat
