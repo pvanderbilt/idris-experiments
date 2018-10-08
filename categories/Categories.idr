@@ -344,3 +344,46 @@ lemVoidFuncsEq f g x impossible
 pl_ioPrf : IsInitial {c = PLTypeCat} Void
 pl_ioPrf = (\a => absurd, lemVoidFuncsEq)
 
+
+---+-----------------------------------------------
+---+ Category of partial functions
+---+   with objects: PL-types, morphisms: A => Option(B)
+---+-----------------------------------------------
+
+mchain: (b -> Maybe c) -> (a -> Maybe b) -> (a -> Maybe c)
+mchain g f x with (f x)
+  mchain g f x | Nothing = Nothing
+  mchain g f x | (Just y) = g y
+
+PFCat : Category
+PFCat = MkCategory 
+  Type                           -- Obj : Type
+  (\a,b => a -> Maybe b)         -- Hom : (x, y : Obj) -> Type
+  (\a, x => Just x)              -- Id : (x : Obj) -> Hom x x
+  (\g,f, x => mchain g f x)      -- Comp : (g : Hom y z) -> (f : Hom x y) -> Hom x z
+  FunEx                          -- ArrowEq : (f, g : Hom x y) -> Type
+
+PFCatAx : CategoryAx PFCat
+PFCatAx = MkCatAx Law_idR Law_idL Law_assoc
+  where
+    C : Category
+    C = PFCat
+
+    Law_idR : {a, b : Obj C} -> (f : Hom a b) -> f === (.) {c=C} f (id {c=C} a)
+    Law_idR f x = Refl
+    
+    Law_idL : {a, b : Obj C} -> (f : Hom a b) -> f === (.) {c=C} (id {c=C} b) f
+    Law_idL f x with (f x)
+      Law_idL f x | Nothing = Refl
+      Law_idL f x | (Just y) = Refl
+
+    Law_assoc : {a, b, c, d : Obj C} -> (f : Hom {c=C} a b) -> (g : Hom {c=C} b c) -> (h : Hom {c=C} c d) 
+                  ->  (.) {c=C} ((.) {c=C} h g) f ===(.) {c=C} h ((.) {c=C} g f)
+    Law_assoc f g h x with (f x)
+      Law_assoc f g h x | Nothing = Refl
+      Law_assoc f g h x | (Just y) with (g y)
+        Law_assoc f g h x | (Just y) | Nothing = Refl
+        Law_assoc f g h x | (Just y) | (Just z) = Refl
+
+
+
