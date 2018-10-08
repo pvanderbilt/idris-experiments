@@ -15,7 +15,7 @@ module Category
 record Category where
   constructor MkCategory
   Obj  : Type
-  Hom  : Obj -> Obj -> Type
+  Hom  : (x, y : Obj) -> Type
   Id   : (x : Obj) -> Hom x x
   Comp : {x, y, z : Obj} -> (g : Hom y z) -> (f : Hom x y) -> Hom x z
   
@@ -37,8 +37,8 @@ infixr 1 >>>
 
 record CategoryAx (c : Category) where
   constructor MkCatAx
-  ObjEq     : (Obj c) -> (Obj c) -> Type
-  ArrowEq   : {x, y : Obj c} -> (Hom c x y) -> (Hom c x y) -> Type
+  ObjEq     : (x, y : Obj c) -> Type
+  ArrowEq   : {x, y : Obj c} -> (f, g : Hom c x y) -> Type
   Law_idR   : {x, y : Obj c} -> (f : Hom c x y) -> ArrowEq f (Comp c f (Id c x))
   Law_idL   : {x, y : Obj c} -> (f : Hom c x y) -> ArrowEq f (Comp c (Id c y) f)
   Law_assoc : {x, y, z, w : Obj c} -> (f : Hom c x y) -> (g : Hom c y z) -> (h : Hom c z w) 
@@ -60,14 +60,15 @@ UnitCatAx : CategoryAx UnitCat
 UnitCatAx = MkCatAx 
   (\x,y => x=y)    -- ObjEq   : (Obj c) -> (Obj c) -> Type
   (\p,q => p=q)    -- ArrowEq : {x, y : Obj c} -> (Hom c x y) -> (Hom c x y) -> Type
-  (\() => Refl)    -- Law_idR : {x, y : Obj c} -> (a : Hom c x y) -> ArrowEq a ((Id c x) >>> a)
-  (\() => Refl)    -- Law_idL : {x, y : Obj c} -> (a : Hom c x y) -> ArrowEq a (a >>> (Id c y))
-  (\p,q,r => Refl) -- Law_assoc : (p : Hom c x y) -> (q : Hom c y z) -> (r : Hom c z w) -> ArrowEq (p >>>(q>>>r)) ((p>>>q)>>>r)
+  (\() => Refl)    -- Law_idR : {x, y : Obj c} -> (f : Hom c x y) -> ArrowEq f (Comp c f (Id c x))
+  (\() => Refl)    -- Law_idL : {x, y : Obj c} -> (f : Hom c x y) -> ArrowEq f (Comp c (Id c y) f)
+  (\p,q,r => Refl) -- Law_assoc : (f : Hom c x y) -> (g : Hom c y z) -> (h : Hom c z w) 
+                   --             -> ArrowEq (Comp c (Comp c h g) f) (Comp c h (Comp c g f))
   
 EmptyCat : Category
 EmptyCat = MkCategory 
   Void                -- Obj : Type
-  (\x,y => Void)      -- Hom    : Obj -> Obj -> Type
+  (\_,_ => Void)      -- Hom    : Obj -> Obj -> Type
   (\p => absurd p)    -- Id  : (x : Obj) -> Hom x x
   (\p,q => absurd p)  -- Comp : (x, y, z : Obj) -> Hom y z -> Hom x y -> Hom x z
  
@@ -75,17 +76,21 @@ EmptyCatAx : CategoryAx EmptyCat
 EmptyCatAx = MkCatAx 
   (\x,y => x=y)        -- ObjEq   : (Obj c) -> (Obj c) -> Type
   (\p,q => p=q)        -- ArrowEq : {x, y : Obj c} -> (Hom c x y) -> (Hom c x y) -> Type
-  (\p => absurd p)     -- Law_idR : {x, y : Obj c} -> (a : Hom c x y) -> ArrowEq a ((Id c x) >>> a)
-  (\q => absurd q)     -- Law_idL : {x, y : Obj c} -> (a : Hom c x y) -> ArrowEq a (a >>> (Id c y))
-  (\p,q,r => absurd p) -- Law_assoc : (p : Hom c x y) -> (q : Hom c y z) -> (r : Hom c z w) -> ArrowEq (p >>>(q>>>r)) ((p>>>q)>>>r)
+  (\p => absurd p)     -- Law_idR : {x, y : Obj c} -> (f : Hom c x y) -> ArrowEq f (Comp c f (Id c x))
+  (\q => absurd q)     -- Law_idL : {x, y : Obj c} -> (f : Hom c x y) -> ArrowEq f (Comp c (Id c y) f)
+  (\p,q,r => absurd p) -- Law_assoc : (f : Hom c x y) -> (g : Hom c y z) -> (h : Hom c z w) 
+                       --             -> ArrowEq (Comp c (Comp c h g) f) (Comp c h (Comp c g f))
 
 
 --------------------------------------------------------------------------------
 -- Older versions, in a more convenient form (but had trouble getting them to type)
 --------------------------------------------------------------------------------
- 
+{- Got errors like
+     Can't infer argument x to Category.UnitCatAx, law_idR, 
+     Can't infer argument y to Category.UnitCatAx, law_idR, 
+     Can't infer argument x1 to Category.UnitCatAx, law_idR, 
+     ... and 23 more ...
 
-{-
 UnitCat : Category
 UnitCat = MkCategory obj hom id comp
   where
@@ -117,7 +122,23 @@ UnitCatAx = MkCatAx objEq arrowEq ?lawIdL -- (\x,y,a => Refl) -- ?h
 -- (\x,y => x=y)
 
 -}
- 
+
+{- This one works, but the axiom part is still stuck -}
+
+UnitCat' : Category
+UnitCat' = MkCategory obj hom id comp
+  where
+    obj : Type
+    obj = ()
+    hom : obj -> obj -> Type
+    hom _ _ = ()
+    id : (x : obj) -> hom x x
+    id _ = ()
+    comp : () -> () -> ()
+    comp _ _ = ()
+    --comp : (x1, x2, x3 : obj) -> hom x1 x2 -> hom x2 x3 -> hom x1 x3
+    --comp _ _ _ g f = ()
+
 --------------------------------------------------------------------------------
 -- Monoids & Monoid-related categories
 --
@@ -157,8 +178,8 @@ MonoidCatAx : (m : Monoid) ->  (max : MonoidAx m) -> CategoryAx (MonoidCat m)
 MonoidCatAx m max = MkCatAx 
   (\x,y => ())         -- ObjEq   : (Obj c) -> (Obj c) -> Type
   (\a,b => a=b)        -- ArrowEq : {x, y : Obj c} -> (Hom c x y) -> (Hom c x y) -> Type
-  (law_ER max)         -- Law_idR : {x, y : Obj c} -> (a : Hom c x y) -> ArrowEq a ((Id c x) >>> a)
-  (law_EL max)         -- Law_idL : {x, y : Obj c} -> (a : Hom c x y) -> ArrowEq a (a >>> (Id c y))
+  (law_ER max)         -- Law_idR : {x, y : Obj c} -> (f : Hom c x y) -> ArrowEq f (Comp c f (Id c x))
+  (law_EL max)         -- Law_idL : {x, y : Obj c} -> (f : Hom c x y) -> ArrowEq f (Comp c (Id c y) f)
   (law_assoc max)      -- Law_assoc : (a,b,c : _) -> ArrowEq (a>>>(b>>>c)) ((a>>>b)>>>c)
 
 ---+------------------------------------------
