@@ -7,16 +7,16 @@ mostly in 2018.
 
 ## Contents
 * `categories/`: Experiments about representing category theory in
-  Idris (Sept 2018, extending work from July&Aug.)
+  Idris (Sept-Oct 2018, extending work from July&Aug.)
     * `CatCore.idr`: Definitions of categories and their axioms and
     some useful properties.
+	* `CatConstructions.idr`: Some constructions about categories and
+      their components.  Includes monomorphisms, epimorphisms, terminal objects,
+      initial objects and products.
 	* `Categories.idr`: Definitions of some categories, including empty
     and unit ones and those based on preorders and monoids.
 	Also categories of (programming language) types and functions (aka **Set**)
 	and where the arrows represent  (`a -> List b`) functions.
-	* `CatConstructions.idr`: Some constructions about categories and
-      their components.  Includes monomorphisms and epimorphisms and terminal and
-      initial objects.
 	* `ArrowCat.idr`: A definition based on a plain arrow type and `Dom`
       and `Cod` functions instead of `Hom`.
 * `projects/`: Experiments about proving various things (most recent first):
