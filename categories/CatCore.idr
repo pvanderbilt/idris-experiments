@@ -5,7 +5,9 @@ module CatCore
 
 
 --------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 -- Categories
+--------------------------------------------------------------------------------
 --------------------------------------------------------------------------------
 
 ---+--------------------------------------
@@ -96,21 +98,28 @@ data FlatEq : {a : Type} -> (f, g : a) -> Type where
 ---+ Uniqueness and singleton
 ---+-----------------------------------------------
 
+-- True when the given arrow, f, is unique in its HOM
 IsUniqueArr : {c : Category} -> {x, y : Obj c} -> (f : Hom x y) -> Type
 IsUniqueArr {x} {y} f = (g : Hom x y) -> f === g
 
+-- True when (HOM x y) has one arrow
 IsSingletonHom : {c : Category} -> (x, y : Obj c) -> Type
 IsSingletonHom x y = (f : Hom x y ** IsUniqueArr f)
 
--- Any two arrows are equal
+-- True when all arrows in (HOM x y) are equal
 IsUniqueHom : {c : Category} -> (x, y : Obj c) -> Type
 IsUniqueHom x y = (f, g : Hom x y) -> f === g
 
 IsSingletonHom' : {c : Category} -> (x, y : Obj c) -> Type
 IsSingletonHom' x y = (Hom x y, IsUniqueHom x y)
 
+-- True when all HOMs have just zero or one arrows
 IsThinCat : (c : Category) -> Type
 IsThinCat c = (x, y : Obj c) -> IsUniqueHom x y
+
+-- True when all arrows in (Hom a b) satisfying predicate, P, are equal
+HPredIsSingleton: {C : Category} -> {a, b : Obj C} -> (P: Hom a b -> Type) -> Type
+HPredIsSingleton {a} {b} P = (f, g : Hom a b) -> P f -> P g -> f === g
 
 ---+-----------------------------------------------
 ---+ Object Isomorphism
@@ -128,3 +137,25 @@ data IsomorphicIsos : {c : Category} -> {x, y : Obj c} -> (p, q : IsomorphicObjs
     -> IsomorphicIsos p1 p2
 
 {- Note: records with implicit parameters don't work well -}
+
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+-- Functions on categories
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+
+-- Op: Opposite category (arrows reversed)
+OpCat: Category -> Category
+OpCat c = MkCategory
+  (Obj c)                    -- Obj : Type
+  (\a,b => IHom c b a)       -- Hom : (x, y : Obj) -> Type
+  (IId c)                    -- Id : (x : Obj) -> Hom x x
+  (\g,f => IComp c f g)      -- Comp : (g : Hom y z) -> (f : Hom x y) -> Hom x z
+  (IArrowEq c)               -- ArrowEq : (f, g : Hom x y) -> Type
+  
+
+-- ArrowEq is symmetric -- not implemented!!
+ArrowEqSym: {x, y : Obj c} -> {f, g : IHom c x y} -> f === g -> g === f  
+
+OpCatAx: (c: Category) -> CategoryAx c -> CategoryAx (OpCat c)
+OpCatAx c cax = MkCatAx (Law_idL cax) (Law_idR cax) (\f,g,h => ArrowEqSym (Law_assoc cax h g f))

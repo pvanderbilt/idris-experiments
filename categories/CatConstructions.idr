@@ -5,9 +5,12 @@ import CatCore
 %access public export
 %default total
 
----+-----------------------------------------------
----+ Mono- and Epimorphisms
----+-----------------------------------------------
+
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+-- Mono- and Epimorphisms
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 IsMonic : {c : Category} -> {y, z : Obj c} -> Hom y z -> Type
 IsMonic {c} {y} {z} g = {x : Obj c} -> (f1, f2 : Hom x y) -> 
@@ -17,9 +20,12 @@ IsEpic : {c : Category} -> {x, y : Obj c} -> Hom x y -> Type
 IsEpic {c} {x} {y} f = {z : Obj c} -> (g1, g2 : Hom y z) -> 
            (g1 . f) === (g2 . f) -> g1 === g2
 
----+-----------------------------------------------
----+ Terminal and Initial Objects
----+-----------------------------------------------
+
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+-- Terminal and Initial Objects
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
 
 -- IsTerminal {c} x is true when x is a terminal object of c
 -- Proof is a pair (inArrow, uniq) where 
@@ -73,3 +79,64 @@ terminalObj c {prf = (x ** pf)} = x
 
 terminalObjPrf : (c : Category) -> {auto prf : TheTerminalFor c} -> IsTerminal (terminalObj c)
 terminalObjPrf c {prf = (x ** pf)} = pf
+
+---+-----------------------------------------------
+---+ Specifying that a category has 
+---+  terminal or initial objects
+---+-----------------------------------------------
+
+CatHasTerminalObj : Category -> Type
+CatHasTerminalObj c = (x : Obj c ** IsTerminal x)
+
+CatHasInitialObj : Category -> Type
+CatHasInitialObj c = (x : Obj c ** IsInitial x)
+
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+--  PRODUCTS and (to come) COPRODUCTS
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+
+-- ProdPat a b: A triple (axb, (p, q)) with a: axb->a and q:axb->b
+ProdPat : {c : Category} -> (a, b : Obj c) -> Type
+ProdPat {c} a b = (axb : Obj c ** (Hom axb a , Hom axb b))
+
+-- IsProdPatMorph cand' cand m: True when m is an appropriate morhphism from cand' to cand
+IsProdPatMorph : (cand', cand : ProdPat a b) -> Hom (fst cand') (fst cand) -> Type
+IsProdPatMorph (axb' ** (p', q')) (axb ** (p, q)) m = (p . m === p' , q . m === q')
+
+-- ProductPf a b prod: True when prod has uniq morphisms from all other candidates
+data ProductPf : {c : Category} -> (a, b: Obj c) -> ProdPat a b -> Type where
+   MkProductPf :
+     {c : Category} -> {a, b: Obj c} ->
+     {axb : Obj c} ->
+     {projL : Hom axb a} ->
+     {projR : Hom axb b} ->
+     -- For any candidate, cand', there is a morphism to the given one
+     (morphF : (cand' : ProdPat a b) ->
+       (m : Hom (fst cand') axb ** IsProdPatMorph cand' (axb ** (projL, projR)) m)) ->
+     -- For any candidate, cand', all morphisms to the given one are equal
+     (morphsUniq: (cand' : ProdPat a b) ->
+           HPredIsSingleton (IsProdPatMorph cand' (axb ** (projL, projR))) ) ->
+     ProductPf {c} a b (axb ** (projL, projR))
+
+---+-----------------------------------------------
+---+ Specifying that a given category has products
+---+-----------------------------------------------
+
+CatHasProducts : Category -> Type
+CatHasProducts c = (a, b: Obj c) -> (prod : ProdPat a b ** ProductPf a b prod)
+
+
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+--  Properties of categories
+--------------------------------------------------------------------------------
+--------------------------------------------------------------------------------
+
+---+-----------------------------------------------
+---+ Cartesian category
+---+-----------------------------------------------
+
+CatIsCartesian : Category -> Type
+CatIsCartesian c = (CatHasTerminalObj c , CatHasProducts c)
