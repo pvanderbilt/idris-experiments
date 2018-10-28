@@ -4,6 +4,7 @@ import CatCore
 import CatConstructions
 import Data.List
 
+%access public export
 %default total
 
 
@@ -338,12 +339,44 @@ lemUnitFuncsEq f g x with (f x)
 pl_toPrf : IsTerminal {c = PLTypeCat} ()
 pl_toPrf = (\a, x => (), lemUnitFuncsEq)
 
+PLTHasTerminalObj : CatHasTerminalObj PLTypeCat
+PLTHasTerminalObj = (() ** pl_toPrf)
+
 lemVoidFuncsEq: {a : Type} -> (f, g : Void -> a) ->  FunEx f g
 lemVoidFuncsEq f g x impossible
 
 pl_ioPrf : IsInitial {c = PLTypeCat} Void
 pl_ioPrf = (\a => absurd, lemVoidFuncsEq)
 
+PLTHasInitialObj : CatHasInitialObj PLTypeCat
+PLTHasInitialObj = (Void ** pl_ioPrf)
+
+---+-----------------------------------------------
+---+ Products for PLTypes
+---+-----------------------------------------------
+
+-- A pair is equal if both components are equal
+LemPairEq: (x,y : (a,b)) -> (fst x = fst y) -> (snd x = snd y) -> x = y
+LemPairEq (x1, x2) (y1, y2) prfst prsnd with (prfst)
+  LemPairEq (z1, x2) (z1, y2) prfst prsnd | Refl with (prsnd)
+    LemPairEq (z1, z2) (z1, z2) prfst prsnd | Refl | Refl = Refl
+
+-- PLTypes has products
+PLTHasProds: CatHasProducts PLTypeCat
+PLTHasProds a b = (
+  ((a, b) ** (fst, snd))  -- product and its projections
+  **
+  MkProductPf             -- proof that the given product has unique morphisms
+    (\(axb' ** (p',q')) => ((\z => (p' z, q' z)) ** ((\_ => Refl), ((\_ => Refl))) ))
+    (\(axb' ** (p',q')), m1, m2, (pIsM11, pIsM12), (pIsM21, pIsM22), z => 
+      LemPairEq (m1 z) (m2 z) 
+        (trans (pIsM11 z) (sym (pIsM21 z))) 
+        (trans (pIsM12 z) (sym (pIsM22 z)))
+      )
+  )
+
+PLTIsCartesian: CatIsCartesian PLTypeCat
+PLTIsCartesian = (PLTHasTerminalObj , PLTHasProds)
 
 ---+-----------------------------------------------
 ---+ Category of partial functions
