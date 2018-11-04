@@ -105,27 +105,26 @@ ProdPat {c} a b = (axb : Obj c ** (Hom axb a , Hom axb b))
 IsProdPatMorph : (cand', cand : ProdPat a b) -> Hom (fst cand') (fst cand) -> Type
 IsProdPatMorph (axb' ** (p', q')) (axb ** (p, q)) m = (p . m === p' , q . m === q')
 
--- ProductPf a b prod: True when prod has uniq morphisms from all other candidates
-data ProductPf : {c : Category} -> (a, b: Obj c) -> ProdPat a b -> Type where
-   MkProductPf :
+-- IsProductObj a b prod: True when prod has uniq morphisms from all other candidates
+data IsProductObj : {c : Category} -> (a, b: Obj c) -> ProdPat a b -> Type where
+   IsProductObjPf :
      {c : Category} -> {a, b: Obj c} ->
-     {axb : Obj c} ->
-     {projL : Hom axb a} ->
-     {projR : Hom axb b} ->
-     -- For any candidate, cand', there is a morphism to the given one
+     {prod : ProdPat a b} ->
+     -- For any candidate, cand', there is a morphism to prod
      (morphF : (cand' : ProdPat a b) ->
-       (m : Hom (fst cand') axb ** IsProdPatMorph cand' (axb ** (projL, projR)) m)) ->
-     -- For any candidate, cand', all morphisms to the given one are equal
+       (m : Hom (fst cand') (fst prod) ** IsProdPatMorph cand' prod m)) ->
+     -- For any candidate, cand', all morphisms to prod are equal
      (morphsUniq: (cand' : ProdPat a b) ->
-           HPredIsSingleton (IsProdPatMorph cand' (axb ** (projL, projR))) ) ->
-     ProductPf {c} a b (axb ** (projL, projR))
+           HPredIsSingleton (IsProdPatMorph cand' prod) ) ->
+       IsProductObj {c} a b prod
+
 
 ---+-----------------------------------------------
 ---+ Specifying that a given category has products
 ---+-----------------------------------------------
 
 CatHasProducts : Category -> Type
-CatHasProducts c = (a, b: Obj c) -> (prod : ProdPat a b ** ProductPf a b prod)
+CatHasProducts c = (a, b: Obj c) -> (prod : ProdPat a b ** IsProductObj a b prod)
 
 
 --------------------------------------------------------------------------------
