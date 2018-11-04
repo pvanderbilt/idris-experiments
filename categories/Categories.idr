@@ -366,7 +366,7 @@ PLTHasProds: CatHasProducts PLTypeCat
 PLTHasProds a b = (
   ((a, b) ** (fst, snd))  -- product and its projections
   **
-  MkProductPf             -- proof that the given product has unique morphisms
+  IsProductObjPf          -- proof that the given product has unique morphisms
     (\(axb' ** (p',q')) => ((\z => (p' z, q' z)) ** ((\_ => Refl), ((\_ => Refl))) ))
     (\(axb' ** (p',q')), m1, m2, (pIsM11, pIsM12), (pIsM21, pIsM22), z => 
       LemPairEq (m1 z) (m2 z) 
