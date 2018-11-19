@@ -6,6 +6,11 @@ Languages Meetup](https://www.meetup.com/SF-Types-Theorems-and-Programming-Langu
 mostly in 2018.
 
 ## Contents
+* `docs/`: Related documents
+    * `IdrisElab.pdf`: A diagram showing my take on how Idris
+      elaboration works (based on "Idris, a General Purpose Dependently
+      Typed Programming Language:
+	  Design and Implementation" by Edwin Brady) (Nov 2018)
 * `categories/`: Experiments about representing category theory in
   Idris (Sept-Oct 2018, extending work from July&Aug.)
     * `CatCore.idr`: Definitions of categories and their axioms and
