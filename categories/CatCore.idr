@@ -20,7 +20,7 @@ record Category where
   IHom     : (x, y : Obj) -> Type
   IId      : (x : Obj) -> IHom x x
   IComp    : {x, y, z : Obj} -> (g : IHom y z) -> (f : IHom x y) -> IHom x z
-  IArrowEq : {x, y : Obj} -> (f, g : IHom x y) -> Type
+  IArrowEq' : (x, y : Obj) -> (f, g : IHom x y) -> Type
   
 
 -- ACCESSORS
@@ -39,6 +39,9 @@ id {c} x = IId c x
 
 (.) : {c : Category} -> {x, y, z : Obj c} -> IHom c y z -> IHom c x y -> IHom c x z
 (.) {c} g f = IComp c g f
+
+IArrowEq : (c : Category) -> {x, y : Obj c } -> (f, g : IHom c x y) -> Type
+IArrowEq c {x} {y} f g = IArrowEq' c x y f g
 
 -- Arrow equality in c: `f === g` means that c has that f and g are the same arrow 
 infixr 1 ===
@@ -151,11 +154,13 @@ OpCat c = MkCategory
   (\a,b => IHom c b a)       -- Hom : (x, y : Obj) -> Type
   (IId c)                    -- Id : (x : Obj) -> Hom x x
   (\g,f => IComp c f g)      -- Comp : (g : Hom y z) -> (f : Hom x y) -> Hom x z
-  (IArrowEq c)               -- ArrowEq : (f, g : Hom x y) -> Type
+  (\x,y => IArrowEq' c y x)               -- ArrowEq : (f, g : Hom x y) -> Type
   
 
+{-
 -- ArrowEq is symmetric -- not implemented!!
 ArrowEqSym: {x, y : Obj c} -> {f, g : IHom c x y} -> f === g -> g === f  
 
 OpCatAx: (c: Category) -> CategoryAx c -> CategoryAx (OpCat c)
 OpCatAx c cax = MkCatAx (Law_idL cax) (Law_idR cax) (\f,g,h => ArrowEqSym (Law_assoc cax h g f))
+-}
