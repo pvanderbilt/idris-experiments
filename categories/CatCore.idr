@@ -15,12 +15,12 @@ module CatCore
 ---+--------------------------------------
 
 record Category where
-  constructor MkCategory
+  constructor IMkCategory
   Obj      : Type
   IHom     : (x, y : Obj) -> Type
   IId      : (x : Obj) -> IHom x x
-  IComp    : {x, y, z : Obj} -> (g : IHom y z) -> (f : IHom x y) -> IHom x z
-  IArrowEq' : (x, y : Obj) -> (f, g : IHom x y) -> Type
+  IComp    : (x, y, z : Obj) -> (g : IHom y z) -> (f : IHom x y) -> IHom x z
+  IArrowEq : (x, y : Obj) -> (f, g : IHom x y) -> Type
   
 
 -- ACCESSORS
@@ -38,16 +38,26 @@ id {c} x = IId c x
 -- Composition in c: `g . f` is "g after f"
 
 (.) : {c : Category} -> {x, y, z : Obj c} -> IHom c y z -> IHom c x y -> IHom c x z
-(.) {c} g f = IComp c g f
+(.) {c} {x} {y} {z} g f = IComp c x y z g f
 
 IArrowEq : (c : Category) -> {x, y : Obj c } -> (f, g : IHom c x y) -> Type
-IArrowEq c {x} {y} f g = IArrowEq' c x y f g
+IArrowEq c {x} {y} f g = IArrowEq c x y f g
 
 -- Arrow equality in c: `f === g` means that c has that f and g are the same arrow 
 infixr 1 ===
 (===) : {c : Category} -> {x, y : Obj c} -> (f, g : IHom c x y) -> Type
-(===) {c} f g = IArrowEq c f g
+(===) {c} {x} {y} f g = IArrowEq c x y f g
 
+-- Convenience constructor using parameters corresponding to the accessors
+--  (But I'm not using it.)
+MkCategory : 
+  (Obj : Type) ->
+  (IHom : (x, y : Obj) -> Type) ->
+  (IId      : (x : Obj) -> IHom x x) ->
+  (IComp    : {x, y, z : Obj} -> (g : IHom y z) -> (f : IHom x y) -> IHom x z) ->
+  (IArrowEq : {x, y : Obj} -> (f, g : IHom x y) -> Type)
+  -> Category
+MkCategory pObj pIHom pIId pIComp pIArrowEq = IMkCategory pObj pIHom pIId (\x,y,z,g,f => pIComp g f) (\x,y, f,g => pIArrowEq f g)
 
 ---+--------------------------------------
 ---+  Category axioms
@@ -58,7 +68,7 @@ record CategoryAx (c : Category) where
   Law_idR   : {x, y : Obj c} -> (f : Hom x y) -> f === f . (id x)
   Law_idL   : {x, y : Obj c} -> (f : Hom x y) -> f === (id y) . f
   Law_assoc : {x, y, z, w : Obj c} -> (f : Hom x y) -> (g : Hom y z) -> (h : Hom z w) 
-                ->  (.) {c=c} (h . g) f === h . (g . f)
+                -> (IArrowEq c x w ((h . g) . f) (h . (g . f)))
 
 {- Had trouble with getting the wrong implicit c, so made it explicit in the last line. -}
 
@@ -68,11 +78,11 @@ record CategoryAx (c : Category) where
 
 record CategoryAxEq (c : Category) where
   constructor MkCatAxEq
-  Law_idR   : {x, y : Obj c} -> (f : Hom x y) -> f = (IComp c f (id x))
-  Law_idL   : {x, y : Obj c} -> (f : Hom x y) -> f = (IComp c (id y) f)
+  Law_idR   : {x, y : Obj c} -> (f : Hom x y) -> f = (IComp c x x y f (id x))
+  Law_idL   : {x, y : Obj c} -> (f : Hom x y) -> f = (IComp c x y y (id y) f)
   Law_assoc : {x, y, z, w : Obj c} -> (f : Hom x y) -> (g : Hom y z) -> (h : Hom z w) 
-              -> (IComp c ((.) h g) f) = (IComp c h (CatCore.(.) g f))
-  CheckEq   : {x, y : Obj c} -> (f, g : IHom c x y) -> (IArrowEq c f g) = (f = g)
+              -> (IComp c x y w (IComp c y z w h g) f) = (IComp c x z w h (IComp c x y z g f))
+  CheckEq   : {x, y : Obj c} -> (f, g : IHom c x y) -> (IArrowEq c x y f g) = (f = g)
 
 {-  Had trouble with (.) being interpreted as from Prelude.Basics (because (=) is heterogeneous),
     so changed to explicit `IComp c` -}
@@ -149,14 +159,13 @@ data IsomorphicIsos : {c : Category} -> {x, y : Obj c} -> (p, q : IsomorphicObjs
 
 -- Op: Opposite category (arrows reversed)
 OpCat: Category -> Category
-OpCat c = MkCategory
-  (Obj c)                    -- Obj : Type
-  (\a,b => IHom c b a)       -- Hom : (x, y : Obj) -> Type
-  (IId c)                    -- Id : (x : Obj) -> Hom x x
-  (\g,f => IComp c f g)      -- Comp : (g : Hom y z) -> (f : Hom x y) -> Hom x z
-  (\x,y => IArrowEq' c y x)               -- ArrowEq : (f, g : Hom x y) -> Type
+OpCat c = IMkCategory
+  (Obj c)                             -- Obj = Obj c
+  (\x,y => IHom c y x)                -- Hom x y = Hom {c} y x
+  (IId c)                             -- id = id
+  (\x,y,z, g,f => IComp c z y x f g)  -- g . f = f .{c} g
+  (\x,y, f,g => IArrowEq c y x f g)   -- (===) = (===) {c}
   
-
 {-
 -- ArrowEq is symmetric -- not implemented!!
 ArrowEqSym: {x, y : Obj c} -> {f, g : IHom c x y} -> f === g -> g === f  

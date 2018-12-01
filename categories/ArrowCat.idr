@@ -54,11 +54,11 @@ record ArrowCatAx (ac : ArrowCategory) where
 ---+------------------------------------------------------
 
 Arrow2Reg : ArrowCategory -> Category
-Arrow2Reg ac = MkCategory 
+Arrow2Reg ac = IMkCategory 
   (Obj ac) 
   (\x,y => (a : Arrow ac ** (Dom ac a = x , Cod ac a = y)))
   (\x => (Id ac x ** IdProp ac x))
-  (\hg, hf => let 
+  (\_,_,_, hg, hf => let 
                 (g ** (pgd , pgc)) = hg
                 (f ** (pfd , pfc)) = hf
                 peq = trans pfc (sym pgd)
@@ -66,7 +66,7 @@ Arrow2Reg ac = MkCategory
                 (pcd , pcc) = CompProp ac g f gof peq Refl
                 (pgofd , pgofc) = (trans pcd pfd , trans pcc pgc)
               in (gof ** (pgofd , pgofc)) )
-  (=)
+  (\_,_ => (=))
 
 {- alternate ending (GOOD)                              
                 gofProp = CompProp ac g f gof peq Refl

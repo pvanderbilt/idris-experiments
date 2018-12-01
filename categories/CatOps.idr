@@ -42,7 +42,7 @@ FunExIsEquiv a b = MkIsEquivRel
 
 -- Predicate saying that a category's arrow equality (===) is an equivalence relation
 CatArrEqIsEquiv : (c : Category) -> Type
-CatArrEqIsEquiv c = (x, y : Obj c) -> IsEquivRel (IHom c x y) (IArrowEq' c x y) -- (===)
+CatArrEqIsEquiv c = (x, y : Obj c) -> IsEquivRel (IHom c x y) (IArrowEq c x y)
 
 
 
@@ -61,8 +61,8 @@ record Functor (c : Category) (d : Category) where
   OMap : (Obj c) -> (Obj d)
   IAMap : (x, y : Obj c) -> IHom c x y -> IHom d (OMap x) (OMap y)
 
-AMap : (fnctr : Functor c d) -> {x, y : Obj c} -> IHom c x y -> IHom d (OMap fnctr x) (OMap fnctr y)
-AMap fnctr {x} {y} f = IAMap fnctr x y f
+AMap : (fcd : Functor c d) -> {x, y : Obj c} -> IHom c x y -> IHom d (OMap fcd x) (OMap fcd y)
+AMap fcd {x} {y} f = IAMap fcd x y f
 
 ---+---------------------------------------------------
 ---+  Definition of an EndoFunctor
@@ -88,11 +88,10 @@ FunctorComp {c=c} fde fcd = MkFunctor ((OMap fde) . (OMap fcd)) (\x,y, f => (IAM
 
 record FunctorLaws (c : Category) (d : Category) (fcd : Functor c d) where
   constructor MkFunctorLaws
-  LawF_eq   : (x, y : Obj c) -> (f, g : IHom c x y) -> f === g -> IAMap fcd x y f === IAMap fcd x y g -- functor preserves ===
-  LawF_id   : (x : Obj c) -> IAMap fcd x x (id x) === id (OMap fcd x)                                 -- functor preserves id
-  LawF_Comp : (x, y, z : Obj c) -> (g : IHom c y z) -> (f : IHom c x y) ->                                  -- functor preserves comp
-                 -- AMap fcd (g . f) === (AMap fcd g) . (AMap fcd f)
-                 ((===) {c=d} {x = OMap fcd x} {y = OMap fcd z} (IAMap fcd x z (g . f)) ((IAMap fcd y z g) . (IAMap fcd x y f)))
+  LawF_eq   : (x, y : Obj c) -> (f, g : Hom x y) -> f === g -> AMap fcd f === AMap fcd g  -- functor preserves ===
+  LawF_id   : (x : Obj c) -> AMap fcd (id x) === id (OMap fcd x)                          -- functor preserves id
+  LawF_Comp : (x, y, z : Obj c) -> (g : Hom y z) -> (f : Hom x y) ->                      -- functor preserves comp
+                 AMap fcd (g . f) === (AMap fcd g) . (AMap fcd f)
 
 -- Proof that FunctorId is a functor
 FunctorIdIsaFunctor : (c : Category) -> CatArrEqIsEquiv c -> FunctorLaws c c (FunctorId c)
@@ -128,10 +127,13 @@ FunctorCompIdOK {c=c} {d=d} {e=e} fde fcd pFLcd pFLde pEEqEquiv x  =
     midc : IHom d mx mx = IAMap fcd x x idc
     midd : IHom e mmx mmx = IAMap fde mx mx idd
     mmidc : IHom e mmx mmx = IAMap fde mx mx midc
-    peqd : ((===) {c=d} {x=mx} {y=mx} midc idd) = LawF_id pFLcd x                           -- : midc === idd (in d)
-    peqe : ((===) {c=e} {x=mmx} {y=mmx} midd ide) = LawF_id pFLde mx                        -- : midd === ide (in e)
-    epeqd : ((===) {c=e} {x=mmx} {y=mmx} mmidc midd) = LawF_eq pFLde mx mx midc idd peqd    -- : mmidc === midd (in e)
-    p = Eq_trans (pEEqEquiv mmx mmx) mmidc midd ide epeqd peqe                              -- : mmidc === ide (in e)
+    -- peqd : ((===) {c=d} {x=mx} {y=mx} midc idd) = LawF_id pFLcd x                           -- : midc === idd (in d)
+    -- peqe : ((===) {c=e} {x=mmx} {y=mmx} midd ide) = LawF_id pFLde mx                        -- : midd === ide (in e)
+    -- epeqd : ((===) {c=e} {x=mmx} {y=mmx} mmidc midd) = LawF_eq pFLde mx mx midc idd peqd    -- : mmidc === midd (in e)
+    peqd = LawF_id pFLcd x                                      -- : midc === idd (in d)
+    peqe = LawF_id pFLde mx                                     -- : midd === ide (in e)
+    epeqd = LawF_eq pFLde mx mx midc idd peqd                   -- : mmidc === midd (in e)
+    p = Eq_trans (pEEqEquiv mmx mmx) mmidc midd ide epeqd peqe  -- : mmidc === ide (in e)
   in p
 
 -- Comp OK
@@ -144,7 +146,7 @@ FunctorCompCompOK : {c, d, e : Category} -> (fde : Functor d e) -> (fcd : Functo
 FunctorCompCompOK {c=c} {d=d} {e=e} fde fcd pFLcd pFLde pEEqEquiv x y z g f = 
   let
     -- cat c
-    cgf = ((.) {c=c} {x=x} {y=y} {z=z} g f)
+    cgf = g . f
     -- cat d
     mx : Obj d = OMap fcd x
     my : Obj d = OMap fcd y
@@ -152,7 +154,7 @@ FunctorCompCompOK {c=c} {d=d} {e=e} fde fcd pFLcd pFLde pEEqEquiv x y z g f =
     mg : IHom d my mz = IAMap fcd y z g
     mf : IHom d mx my = IAMap fcd x y f
     mcgf : IHom d mx mz = IAMap fcd x z cgf
-    cmgmf : IHom d mx mz =  ((.) {c=d} {x=mx} {y=my} {z=mz} mg mf)
+    cmgmf : IHom d mx mz = mg . mf
     -- cat e
     mmx = OMap fde mx
     mmy = OMap fde my
@@ -161,7 +163,7 @@ FunctorCompCompOK {c=c} {d=d} {e=e} fde fcd pFLcd pFLde pEEqEquiv x y z g f =
     mmf : IHom e mmx mmy = IAMap fde mx my mf
     mmcgf : IHom e mmx mmz = IAMap fde mx mz mcgf
     mcmgmf : IHom e mmx mmz = IAMap fde mx mz cmgmf
-    cmmgmmf : IHom e mmx mmz = (.) {c=e} {x=mmx} {y=mmy} {z=mmz} mmg mmf
+    cmmgmmf : IHom e mmx mmz = mmg . mmf
     -- equalities
     r1 : (mcgf === cmgmf) = LawF_Comp pFLcd x y z g f                 -- m (g.f) = mg . mf
     pr1 : (mmcgf === mcmgmf) = LawF_eq pFLde mx mz mcgf cmgmf r1      -- mm (g.f) = m (mg . mf)
