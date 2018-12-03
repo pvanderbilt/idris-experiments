@@ -1,5 +1,6 @@
 module CatConstructions
 
+import CatMath
 import CatCore
 
 %access public export

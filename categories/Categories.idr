@@ -1,5 +1,6 @@
 module Categories
 
+import CatMath
 import CatCore
 import CatConstructions
 import Data.List
@@ -20,26 +21,27 @@ import Data.List
 ---+----------------------------------------------
 
 EmptyCat : Category
-EmptyCat = MkCategory 
-  Void                 -- Obj : Type
-  (\x,y => Void)       -- Hom : (x, y : Obj) -> Type
-  (\x => absurd x)     -- Id : (x : Obj) -> Hom x x
-  (\g,f => absurd g)   -- Comp : (g : Hom y z) -> (f : Hom x y) -> Hom x z
-  (\f,g => f=g)        -- ArrowEq : (f, g : Hom x y) -> Type
+EmptyCat = IMkCategory 
+  Void                      -- Obj : Type
+  (\x,y => Void)            -- Hom : (x, y : Obj) -> Type
+  (\x => absurd x)          -- Id : (x : Obj) -> Hom x x
+  (\_,_,_, g,f => absurd g) -- Comp : (g : Hom y z) -> (f : Hom x y) -> Hom x z
+  (\_,_, f,g => f=g)        -- ArrowEq : (f, g : Hom x y) -> Type
   
 EmptyCatAx : CategoryAx EmptyCat
 EmptyCatAx = MkCatAx 
-  (\f => absurd f)     -- Law_idR : (f : Hom x y) -> f === f . (id x)
-  (\f => absurd f)     -- Law_idL : (f : Hom x y) -> f === (id y) . f
-  (\f,g,h => absurd f) -- Law_assoc : (f, g, h : _) -> (h . g) . f === h . (g . f)
+  (\f => absurd f)      -- Law_idR : (f : Hom x y) -> f === f . (id x)
+  (\f => absurd f)      -- Law_idL : (f : Hom x y) -> f === (id y) . f
+  (\f,g,h => absurd f)  -- Law_assoc : (f, g, h : _) -> (h . g) . f === h . (g . f)
+  (\_,_ => IdIsEquiv _) -- Law_arrEqIsEquiv : (x, y : Obj c) -> IsEquivRel (IHom c x y) (IArrowEq c x y)
 
 UnitCat : Category
-UnitCat = MkCategory 
+UnitCat = IMkCategory 
   ()                 -- Obj : Type
   (\_,_ => ())       -- Hom : (x, y : Obj) -> Type
   (\_ => ())         -- Id : (x : Obj) -> Hom x x
-  (\_,_ => ())       -- Comp : (g : Hom y z) -> (f : Hom x y) -> Hom x z
-  (\f,g => f=g)      -- ArrowEq : (f, g : Hom x y) -> Type
+  (\_,_,_,_,_ => ()) -- Comp : (g : Hom y z) -> (f : Hom x y) -> Hom x z
+  (\_,_, f,g => f=g) -- ArrowEq : (f, g : Hom x y) -> Type
 
 
 UnitCatAx : CategoryAx UnitCat
@@ -47,6 +49,7 @@ UnitCatAx = MkCatAx
   (\() => Refl)      -- Law_idR : (f : Hom x y) -> f === f . (id x)
   (\() => Refl)      -- Law_idL : (f : Hom x y) -> f === (id y) . f
   (\f,g,h => Refl)   -- Law_assoc : (f, g, h : _) -> (h . g) . f === h . (g . f)
+  (\x,y => IdIsEquiv _) -- Law_arrEqIsEquiv : (x, y : Obj c) -> IsEquivRel (IHom c x y) (IArrowEq c x y)
   
 
 ---+------------------------------------------
@@ -65,12 +68,17 @@ record DecideablePreorder where
                    -> IsTrue (LTE x z)
   
 DecPreorderCat : (p : DecideablePreorder) -> Category
-DecPreorderCat p = MkCategory
-  (Elem p)                         -- Obj : Type
-  (\x, y => IsTrue (LTE p x y))    -- Hom : (x, y : Obj) -> Type
-  (\x => LTE_Reflexive p x)        -- Id : (x : Obj) -> Hom x x
-  (\g,f => LTE_Transitive p f g)   -- Comp : (g : Hom y z) -> (f : Hom x y) -> Hom x z
-  (=)                              -- ArrowEq : (f, g : Hom x y) -> Type
+DecPreorderCat p = IMkCategory
+  -- Obj : Type
+  -- Hom : (x, y : Obj) -> Type                     
+  -- IId : (x : Obj) -> Hom x x
+  -- IComp : (x,y,z : Obj) -> (g : Hom y z) -> (f : Hom x y) -> Hom x z
+  -- IArrowEq : (x,y : Obj) -> (f, g : Hom x y) -> Type
+  (Elem p)
+  (\x, y => IsTrue (LTE p x y))
+  (\x => LTE_Reflexive p x)        
+  (\_,_,_, g,f => LTE_Transitive p f g)   
+  (\_,_ => (=))                              
 
 
 Relation : (a : Type) -> Type 
@@ -90,18 +98,24 @@ record Preorder where
   Rel_Transitive : RelTransitive Rel
 
 PreorderCat : (p : Preorder) -> Category
-PreorderCat p = MkCategory
-  (Elem p)                         -- Obj : Type
-  (Rel p)                          -- Hom : (x, y : Obj) -> Type
-  (Rel_Reflexive p)                -- Id : (x : Obj) -> Hom x x
-  (\g, f => Rel_Transitive p f g)  -- Comp : (g : Hom y z) -> (f : Hom x y) -> Hom x z
-  (\f, g => FlatEq f g)            -- ArrowEq : (f, g : Hom x y) -> Type
+PreorderCat p = IMkCategory
+  -- Obj : Type
+  -- Hom : (x, y : Obj) -> Type                     
+  -- IId : (x : Obj) -> Hom x x
+  -- IComp : (x,y,z : Obj) -> (g : Hom y z) -> (f : Hom x y) -> Hom x z
+  -- IArrowEq : (x,y : Obj) -> (f, g : Hom x y) -> Type
+  (Elem p)
+  (Rel p)
+  (Rel_Reflexive p)
+  (\_,_,_, g, f => Rel_Transitive p f g)
+  (\_,_, f, g => FlatEq f g)
 
 PreorderCatAx :  (p : Preorder) -> CategoryAx (PreorderCat p)
 PreorderCatAx p = MkCatAx 
   (\f => TheyBEq _ _)              -- Law_idR : (f : Hom x y) -> f === f . (id x)
   (\f => TheyBEq _ _)              -- Law_idL : (f : Hom x y) -> f === (id y) . f
   (\f,g,h => TheyBEq _ _)          -- Law_assoc : (f, g, h : _) -> (h . g) . f === h . (g . f)
+  (\x,y => FlatEqIsEquiv _)        -- Law_arrEqIsEquiv : (x, y : Obj c) -> IsEquivRel (IHom c x y) (IArrowEq c x y)
 
 
 -- Preorder-based categories are thin, in that each HOM has at most one arrow
@@ -140,18 +154,24 @@ record MonoidAx (m : Monoid) where
 ---+------------------------------------------
 
 MonoidCat : (m : Monoid) -> Category
-MonoidCat m = MkCategory 
-  ()                   -- Obj : Type
-  (\_,_ => (S m))      -- Hom : (x, y : Obj) -> Type
-  (\_ => (E m))        -- Id : (x : Obj) -> Hom x x
-  (\g,f => (Op m g f)) -- Comp : (g : Hom y z) -> (f : Hom x y) -> Hom x z
-  (\f,g => f=g)        -- ArrowEq : (f, g : Hom x y) -> Type
+MonoidCat m = IMkCategory 
+  -- Obj : Type
+  -- Hom : (x, y : Obj) -> Type                     
+  -- IId : (x : Obj) -> Hom x x
+  -- IComp : (x,y,z : Obj) -> (g : Hom y z) -> (f : Hom x y) -> Hom x z
+  -- IArrowEq : (x,y : Obj) -> (f, g : Hom x y) -> Type
+  ()
+  (\_,_ => (S m))
+  (\_ => (E m))
+  (\_,_,_, g,f => (Op m g f))
+  (\_,_, f,g => f=g)
 
 MonoidCatAx : (m : Monoid) ->  (max : MonoidAx m) -> CategoryAx (MonoidCat m)
 MonoidCatAx m max = MkCatAx 
   (law_ER max)         -- Law_idR : (f : Hom x y) -> f === f . (id x)
   (law_EL max)         -- Law_idL : (f : Hom x y) -> f === (id y) . f
   (law_assoc max)      -- Law_assoc : (f, g, h : _) -> (h . g) . f === h . (g . f)
+  (\x,y => IdIsEquiv _)-- Law_arrEqIsEquiv : (x, y : Obj c) -> IsEquivRel (IHom c x y) (IArrowEq c x y)
 
 ---+------------------------------------------
 ---+ Any 1 object category is a monoid
@@ -159,10 +179,10 @@ MonoidCatAx m max = MkCatAx
 
 OneObjCat2Monoid : (c : Category) -> ((Obj c) = ()) -> Monoid
 OneObjCat2Monoid c p = let theObj : Obj c = rewrite p in () 
-                       in MkMonoid (Hom theObj theObj)  (id theObj) (IComp c)
+                       in MkMonoid (Hom theObj theObj)  (id theObj) (IComp c _ _ _)
 
 OneObjCat2Monoid2 : (c : Category) -> (x : Obj c ** (y : Obj c) -> x=y) -> Monoid
-OneObjCat2Monoid2 c (x ** _) = MkMonoid (Hom x x)  (id x) (IComp c)
+OneObjCat2Monoid2 c (x ** _) = MkMonoid (Hom x x)  (id x) (IComp c _ _ _)
 
 
 
@@ -178,7 +198,7 @@ Hom2Monoid : (c : Category) -> (cax: CategoryAxEq c) -> (x : Obj c)
              -> (m : Monoid ** ((S m) = (Hom x x) , MonoidAx m))
 Hom2Monoid c cax x = 
   let
-    m = MkMonoid (Hom x x)  (id x) (IComp c)
+    m = MkMonoid (Hom x x)  (id x) (IComp c _ _ _)
     ler = Law_idR cax 
     lel = Law_idL cax 
     lassoc = Law_assoc cax
@@ -227,11 +247,13 @@ MonoidHomComp h23 h12 =
 ---+--------------------------------------------------------
 
 MonoidsCat : Category
-MonoidsCat = MkCategory Monoid MonoidHom MonoidIdHom MonoidHomComp (=)
+MonoidsCat = IMkCategory Monoid MonoidHom MonoidIdHom (\_,_,_ => MonoidHomComp) (\_,_ => (=))
 
 {- Not done -}
 -- MonoidsCatAx : CategoryAx MonoidsCat
 -- MonoidsCatAx = MkCatAx (\f1 => ?Law_idR) ?Law_idL ?Law_assoc
+
+
 
 --------------------------------------------------------------------------------
 -- Categories: 
@@ -245,12 +267,17 @@ MonoidsCat = MkCategory Monoid MonoidHom MonoidIdHom MonoidHomComp (=)
 ---+----------------------------------------------
 
 PLTypeCat : Category
-PLTypeCat = MkCategory 
-  Type                    -- Obj : Type
-  (\a,b => a->b)          -- Hom : (x, y : Obj) -> Type
-  (\a => \x => x)         -- Id : (x : Obj) -> Hom x x
-  (\g,f, x => g (f x))    -- Comp : (g : Hom y z) -> (f : Hom x y) -> Hom x z
-  FunEx                   -- ArrowEq : (f, g : Hom x y) -> Type
+PLTypeCat = IMkCategory 
+  -- Obj : Type
+  -- Hom : (x, y : Obj) -> Type                     
+  -- IId : (x : Obj) -> Hom x x
+  -- IComp : (x,y,z : Obj) -> (g : Hom y z) -> (f : Hom x y) -> Hom x z
+  -- IArrowEq : (x,y : Obj) -> (f, g : Hom x y) -> Type
+  Type                        -- Obj = Type
+  (\a,b => a->b)              -- Hom a b = a->b
+  (\a => \x => x)             -- Id a = (\x => x)
+  (\_,_,_, g,f, x => g (f x)) -- g . f = g . f
+  (\_,_ => FunEx)             -- f === g = (\x => f x = g x)
   
 
 PLTypeCatAx : CategoryAx PLTypeCat
@@ -258,6 +285,7 @@ PLTypeCatAx = MkCatAx
   (\f, x => Refl)         -- Law_idR   : (f : Hom x y) -> f === f . (id x)
   (\f, x => Refl)         -- Law_idL   : (f : Hom x y) -> f === (id y) . f
   (\f,g,h, x => Refl)     -- Law_assoc : (f, g, h : _) -> (h . g) . f === h . (g . f)
+  FunExIsEquiv
 
 ---+-----------------------------------------------
 ---+ Category with PL-types, morphisms A => List(B)
@@ -271,12 +299,17 @@ flatmap f [] = []
 flatmap f (x :: xs) = (f x) ++ (flatmap f xs)
 
 FMCat : Category
-FMCat = MkCategory 
-  Type                           -- Obj : Type
-  (\a,b => a -> List b)          -- Hom : (x, y : Obj) -> Type
-  (\a, x => [x])                 -- Id : (x : Obj) -> Hom x x
-  (\g,f, x => flatmap g (f x))   -- Comp : (g : Hom y z) -> (f : Hom x y) -> Hom x z
-  FunEx                          -- ArrowEq : (f, g : Hom x y) -> Type
+FMCat = IMkCategory 
+  -- Obj : Type
+  -- Hom : (x, y : Obj) -> Type                     
+  -- IId : (x : Obj) -> Hom x x
+  -- IComp : (x,y,z : Obj) -> (g : Hom y z) -> (f : Hom x y) -> Hom x z
+  -- IArrowEq : (x,y : Obj) -> (f, g : Hom x y) -> Type
+  Type                                -- Obj = Type
+  (\a,b => a -> List b)               -- Hom a b = a -> List b
+  (\a, x => [x])                      -- Id a = (\x => [x])
+  (\_,_,_, g,f, x => flatmap g (f x)) -- g . f = (\x => flatmap g (f x))
+  (\_,_ => FunEx)                     -- f === g = FunEx f g
 
 
 ---+-----------------------------------------------
@@ -311,6 +344,7 @@ FMCatAx = MkCatAx
   (\f, x => sym $ appendNilRightNeutral (f x))  --  Law_idL   : (f : Hom x y) -> f === f . (id x)
   (\f, x => lem_flatmap_id (f x))               --  Law_idR   : (f : Hom x y) -> f === (id y) . f
   (\f,g,h, x => lem_fm_assoc g h (f x))         --  Law_assoc : (f, g, h : _) -> (h . g) . f === h . (g . f)
+  (\x,y => FunExIsEquiv x (List y))
 
 
 -- Alternate definition allowing `lem_fm_assoc'` to be the value of the last line
@@ -389,15 +423,20 @@ mchain g f x with (f x)
   mchain g f x | (Just y) = g y
 
 PFCat : Category
-PFCat = MkCategory 
-  Type                           -- Obj : Type
-  (\a,b => a -> Maybe b)         -- Hom : (x, y : Obj) -> Type
-  (\a, x => Just x)              -- Id : (x : Obj) -> Hom x x
-  (\g,f, x => mchain g f x)      -- Comp : (g : Hom y z) -> (f : Hom x y) -> Hom x z
-  FunEx                          -- ArrowEq : (f, g : Hom x y) -> Type
+PFCat = IMkCategory 
+  -- Obj : Type
+  -- Hom : (x, y : Obj) -> Type                     
+  -- Id : (x : Obj) -> Hom x x
+  -- IComp : (x,y,z : Obj) -> (g : Hom y z) -> (f : Hom x y) -> Hom x z
+  -- IArrowEq : (x,y : Obj) -> (f, g : Hom x y) -> Type
+  Type                             -- Obj = Type
+  (\a,b => a -> Maybe b)           -- Hom a b = a -> Maybe b
+  (\a, x => Just x)                -- Id a = Just
+  (\_,_,_, g,f, x => mchain g f x) -- g . f = mchain g f
+  (\_,_ => FunEx)                  -- f === g = FunEx fg
 
 PFCatAx : CategoryAx PFCat
-PFCatAx = MkCatAx Law_idR Law_idL Law_assoc
+PFCatAx = MkCatAx Law_idR Law_idL Law_assoc Law_arrEqIsEquiv
   where
     C : Category
     C = PFCat
@@ -418,5 +457,5 @@ PFCatAx = MkCatAx Law_idR Law_idL Law_assoc
         Law_assoc f g h x | (Just y) | Nothing = Refl
         Law_assoc f g h x | (Just y) | (Just z) = Refl
 
-
-
+    Law_arrEqIsEquiv : (x, y : Obj C) -> IsEquivRel (IHom C x y) (IArrowEq C x y)
+    Law_arrEqIsEquiv x y = FunExIsEquiv x (Maybe y)
