@@ -73,10 +73,6 @@ record CategoryAx (c : Category) where
                 -> (IArrowEq c x w ((h . g) . f) (h . (g . f)))
   Law_arrEqIsEquiv : (x, y : Obj c) -> IsEquivRel (IHom c x y) (IArrowEq c x y)
 
--- Predicate saying that a category's arrow equality (===) is an equivalence relation
-CatArrEqIsEquiv : (c : Category) -> Type
-CatArrEqIsEquiv c = (x, y : Obj c) -> IsEquivRel (IHom c x y) (IArrowEq c x y)
-
 ---+----------------------------------------------
 ---+  Category Axioms with built-in = 
 ---+----------------------------------------------
