@@ -1,5 +1,7 @@
 module CatCore
 
+import CatMath
+
 %access public export
 %default total
 
@@ -69,8 +71,11 @@ record CategoryAx (c : Category) where
   Law_idL   : {x, y : Obj c} -> (f : Hom x y) -> f === (id y) . f
   Law_assoc : {x, y, z, w : Obj c} -> (f : Hom x y) -> (g : Hom y z) -> (h : Hom z w) 
                 -> (IArrowEq c x w ((h . g) . f) (h . (g . f)))
+  Law_arrEqIsEquiv : (x, y : Obj c) -> IsEquivRel (IHom c x y) (IArrowEq c x y)
 
-{- Had trouble with getting the wrong implicit c, so made it explicit in the last line. -}
+-- Predicate saying that a category's arrow equality (===) is an equivalence relation
+CatArrEqIsEquiv : (c : Category) -> Type
+CatArrEqIsEquiv c = (x, y : Obj c) -> IsEquivRel (IHom c x y) (IArrowEq c x y)
 
 ---+----------------------------------------------
 ---+  Category Axioms with built-in = 
@@ -90,21 +95,6 @@ record CategoryAxEq (c : Category) where
 --------------------------------------------------------------------------------
 -- Some useful functions
 --------------------------------------------------------------------------------
-
----+-----------------------------------------------
----+ FunEx: Function extensionality
----+-----------------------------------------------
-
-FunEx : (f,g : a->b) -> Type
-FunEx f g = (x : _) -> (f x) = (g x)
-
-
----+-----------------------------------------------
----+ FlatEq: Equality where all instances are equal
----+-----------------------------------------------
-
-data FlatEq : {a : Type} -> (f, g : a) -> Type where
-  TheyBEq :  {a : Type} -> (f, g : a) -> FlatEq f g
 
 
 ---+-----------------------------------------------
@@ -151,25 +141,3 @@ data IsomorphicIsos : {c : Category} -> {x, y : Obj c} -> (p, q : IsomorphicObjs
 
 {- Note: records with implicit parameters don't work well -}
 
---------------------------------------------------------------------------------
---------------------------------------------------------------------------------
--- Functions on categories
---------------------------------------------------------------------------------
---------------------------------------------------------------------------------
-
--- Op: Opposite category (arrows reversed)
-OpCat: Category -> Category
-OpCat c = IMkCategory
-  (Obj c)                             -- Obj = Obj c
-  (\x,y => IHom c y x)                -- Hom x y = Hom {c} y x
-  (IId c)                             -- id = id
-  (\x,y,z, g,f => IComp c z y x f g)  -- g . f = f .{c} g
-  (\x,y, f,g => IArrowEq c y x f g)   -- (===) = (===) {c}
-  
-{-
--- ArrowEq is symmetric -- not implemented!!
-ArrowEqSym: {x, y : Obj c} -> {f, g : IHom c x y} -> f === g -> g === f  
-
-OpCatAx: (c: Category) -> CategoryAx c -> CategoryAx (OpCat c)
-OpCatAx c cax = MkCatAx (Law_idL cax) (Law_idR cax) (\f,g,h => ArrowEqSym (Law_assoc cax h g f))
--}

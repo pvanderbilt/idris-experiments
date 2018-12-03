@@ -1,5 +1,6 @@
 module Categories
 
+import CatMath
 import CatCore
 import CatConstructions
 import Data.List
@@ -29,9 +30,10 @@ EmptyCat = IMkCategory
   
 EmptyCatAx : CategoryAx EmptyCat
 EmptyCatAx = MkCatAx 
-  (\f => absurd f)     -- Law_idR : (f : Hom x y) -> f === f . (id x)
-  (\f => absurd f)     -- Law_idL : (f : Hom x y) -> f === (id y) . f
-  (\f,g,h => absurd f) -- Law_assoc : (f, g, h : _) -> (h . g) . f === h . (g . f)
+  (\f => absurd f)      -- Law_idR : (f : Hom x y) -> f === f . (id x)
+  (\f => absurd f)      -- Law_idL : (f : Hom x y) -> f === (id y) . f
+  (\f,g,h => absurd f)  -- Law_assoc : (f, g, h : _) -> (h . g) . f === h . (g . f)
+  (\_,_ => IdIsEquiv _) -- Law_arrEqIsEquiv : (x, y : Obj c) -> IsEquivRel (IHom c x y) (IArrowEq c x y)
 
 UnitCat : Category
 UnitCat = IMkCategory 
@@ -39,7 +41,7 @@ UnitCat = IMkCategory
   (\_,_ => ())       -- Hom : (x, y : Obj) -> Type
   (\_ => ())         -- Id : (x : Obj) -> Hom x x
   (\_,_,_,_,_ => ()) -- Comp : (g : Hom y z) -> (f : Hom x y) -> Hom x z
-  (\_,_ => (=))      -- ArrowEq : (f, g : Hom x y) -> Type
+  (\_,_, f,g => f=g) -- ArrowEq : (f, g : Hom x y) -> Type
 
 
 UnitCatAx : CategoryAx UnitCat
@@ -47,6 +49,7 @@ UnitCatAx = MkCatAx
   (\() => Refl)      -- Law_idR : (f : Hom x y) -> f === f . (id x)
   (\() => Refl)      -- Law_idL : (f : Hom x y) -> f === (id y) . f
   (\f,g,h => Refl)   -- Law_assoc : (f, g, h : _) -> (h . g) . f === h . (g . f)
+  (\x,y => IdIsEquiv _) -- Law_arrEqIsEquiv : (x, y : Obj c) -> IsEquivRel (IHom c x y) (IArrowEq c x y)
   
 
 ---+------------------------------------------
@@ -112,6 +115,7 @@ PreorderCatAx p = MkCatAx
   (\f => TheyBEq _ _)              -- Law_idR : (f : Hom x y) -> f === f . (id x)
   (\f => TheyBEq _ _)              -- Law_idL : (f : Hom x y) -> f === (id y) . f
   (\f,g,h => TheyBEq _ _)          -- Law_assoc : (f, g, h : _) -> (h . g) . f === h . (g . f)
+  (\x,y => FlatEqIsEquiv _)        -- Law_arrEqIsEquiv : (x, y : Obj c) -> IsEquivRel (IHom c x y) (IArrowEq c x y)
 
 
 -- Preorder-based categories are thin, in that each HOM has at most one arrow
@@ -167,6 +171,7 @@ MonoidCatAx m max = MkCatAx
   (law_ER max)         -- Law_idR : (f : Hom x y) -> f === f . (id x)
   (law_EL max)         -- Law_idL : (f : Hom x y) -> f === (id y) . f
   (law_assoc max)      -- Law_assoc : (f, g, h : _) -> (h . g) . f === h . (g . f)
+  (\x,y => IdIsEquiv _)-- Law_arrEqIsEquiv : (x, y : Obj c) -> IsEquivRel (IHom c x y) (IArrowEq c x y)
 
 ---+------------------------------------------
 ---+ Any 1 object category is a monoid
@@ -280,6 +285,7 @@ PLTypeCatAx = MkCatAx
   (\f, x => Refl)         -- Law_idR   : (f : Hom x y) -> f === f . (id x)
   (\f, x => Refl)         -- Law_idL   : (f : Hom x y) -> f === (id y) . f
   (\f,g,h, x => Refl)     -- Law_assoc : (f, g, h : _) -> (h . g) . f === h . (g . f)
+  FunExIsEquiv
 
 ---+-----------------------------------------------
 ---+ Category with PL-types, morphisms A => List(B)
@@ -338,6 +344,7 @@ FMCatAx = MkCatAx
   (\f, x => sym $ appendNilRightNeutral (f x))  --  Law_idL   : (f : Hom x y) -> f === f . (id x)
   (\f, x => lem_flatmap_id (f x))               --  Law_idR   : (f : Hom x y) -> f === (id y) . f
   (\f,g,h, x => lem_fm_assoc g h (f x))         --  Law_assoc : (f, g, h : _) -> (h . g) . f === h . (g . f)
+  (\x,y => FunExIsEquiv x (List y))
 
 
 -- Alternate definition allowing `lem_fm_assoc'` to be the value of the last line
@@ -429,7 +436,7 @@ PFCat = IMkCategory
   (\_,_ => FunEx)                  -- f === g = FunEx fg
 
 PFCatAx : CategoryAx PFCat
-PFCatAx = MkCatAx Law_idR Law_idL Law_assoc
+PFCatAx = MkCatAx Law_idR Law_idL Law_assoc Law_arrEqIsEquiv
   where
     C : Category
     C = PFCat
@@ -450,5 +457,5 @@ PFCatAx = MkCatAx Law_idR Law_idL Law_assoc
         Law_assoc f g h x | (Just y) | Nothing = Refl
         Law_assoc f g h x | (Just y) | (Just z) = Refl
 
-
-
+    Law_arrEqIsEquiv : (x, y : Obj C) -> IsEquivRel (IHom C x y) (IArrowEq C x y)
+    Law_arrEqIsEquiv x y = FunExIsEquiv x (Maybe y)
