@@ -21,8 +21,7 @@ import CatConstructions
 --------------------------------------------------------------------------------
 
 ---+---------------------------------------------------
----+  Definition of OpCat which yields 
----+ the opposite category (one with arrows reversed)
+---+ OpCat: The category in which all arrows are reversed.
 ---+---------------------------------------------------
 
 OpCat: Category -> Category
@@ -91,3 +90,5 @@ record FunctorLaws (c : Category) (d : Category) (fcd : Functor c d) where
   LawF_Comp : (x, y, z : Obj c) -> (g : Hom y z) -> (f : Hom x y) ->                      -- functor preserves comp
                  AMap fcd (g . f) === (AMap fcd g) . (AMap fcd f)
 
+EndoFunctorLaws : (c : Category) -> (F : Functor c c) -> Type
+EndoFunctorLaws c fF = FunctorLaws c c fF
