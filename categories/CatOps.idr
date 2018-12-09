@@ -92,3 +92,47 @@ record FunctorLaws (c : Category) (d : Category) (fcd : Functor c d) where
 
 EndoFunctorLaws : (c : Category) -> (F : Functor c c) -> Type
 EndoFunctorLaws c fF = FunctorLaws c c fF
+
+
+
+--------------------------------------------------------------------------------
+-- Product of Categories
+--    (Different from the internal prod construction)
+--------------------------------------------------------------------------------
+
+---+---------------------------------------------------
+---+  ProdCat: The cartesian product of two categories
+---+---------------------------------------------------
+
+PCObj : (c1, c2 : Category) -> Type
+PCObj c1 c2 = (Obj c1, Obj c2) 
+
+PCHom : (c1, c2 : Category) -> (x, y : PCObj c1 c2) -> Type
+PCHom c1 c2 = (\(x1, x2), (y1, y2) => (IHom c1 x1 y1, IHom c2 x2 y2))
+
+PCId : (c1, c2 : Category) -> (x : PCObj c1 c2) -> PCHom c1 c2 x x
+PCId c1 c2 = (\(x1, x2) => (IId c1 x1 , IId c2 x2))
+
+PCComp : (c1, c2 : Category) -> (x, y, z : PCObj c1 c2) 
+         -> PCHom c1 c2 y z -> PCHom c1 c2 x y -> PCHom c1 c2 x z
+PCComp c1 c2 = (\(x1, x2), (y1, y2), (z1, z2), (g1, g2), (f1, f2) 
+               => (IComp c1 x1 y1 z1 g1 f1 , IComp c2 x2 y2 z2 g2 f2))
+
+PCIArrowEq : (c1, c2 : Category) -> (x, y : PCObj c1 c2) 
+             -> (f, g : PCHom c1 c2 x y) -> Type
+PCIArrowEq c1 c2 = (\(x1, x2), (y1, y2), (g1, g2), (f1, f2)  
+                   => (IArrowEq c1 x1 y1 g1 f1 , IArrowEq c2 x2 y2 g2 f2))
+
+ProdCat: Category -> Category -> Category
+ProdCat c1 c2 = IMkCategory (PCObj c1 c2) (PCHom c1 c2) (PCId c1 c2) (PCComp c1 c2) (PCIArrowEq c1 c2)
+
+
+--------------------------------------------------------------------------------
+-- Bifunctor : c1 x c2 --> d
+--------------------------------------------------------------------------------
+
+BiFunctor : (c1, c2 : Category) -> Category -> Type
+BiFunctor c1 c2 d = Functor (ProdCat c1 c2) d
+
+EndoBiFunctor : Category -> Type
+EndoBiFunctor c = BiFunctor c c c
