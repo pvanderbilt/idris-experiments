@@ -459,3 +459,5 @@ PFCatAx = MkCatAx Law_idR Law_idL Law_assoc Law_arrEqIsEquiv
 
     Law_arrEqIsEquiv : (x, y : Obj C) -> IsEquivRel (IHom C x y) (IArrowEq C x y)
     Law_arrEqIsEquiv x y = FunExIsEquiv x (Maybe y)
+
+

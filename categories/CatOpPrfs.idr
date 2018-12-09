@@ -100,3 +100,50 @@ FunctorCompYieldsaFunctor {c=c} {d=d} {e=e} fde fcd pFLcd pFLde caxe =
     (FunctorCompEqOK fde fcd pFLcd pFLde) 
     (FunctorCompIdOK fde fcd pFLcd pFLde pEqAxE)
     (FunctorCompCompOK fde fcd pFLcd pFLde pEqAxE)
+
+
+
+---+---------------------------------------------------
+---+  ProdCatPrf: Proof that ProdCat is a category
+---+---------------------------------------------------
+
+PCPIdR : (c1, c2 : Category) -> CategoryAx c1 -> CategoryAx c2 -> 
+         let PC = ProdCat c1 c2 in (x,y : Obj PC) -> (f : IHom PC x y) -> f === f . (id x)
+PCPIdR c1 c2 plc1 plc2 = (\(x1, x2), (y1, y2), (f1, f2) => (Law_idR plc1 f1 , Law_idR plc2 f2))
+
+PCPIdL : (c1, c2 : Category) -> CategoryAx c1 -> CategoryAx c2 -> 
+         let PC = ProdCat c1 c2 in (x,y : Obj PC) -> (f : IHom PC x y) -> f === (id y) . f
+PCPIdL c1 c2 plc1 plc2 = (\(x1, x2), (y1, y2), (f1, f2) => (Law_idL plc1 f1 , Law_idL plc2 f2))
+
+PCPAssoc : (c1, c2 : Category) -> CategoryAx c1 -> CategoryAx c2 -> let PC = ProdCat c1 c2 in 
+           (x, y, z, w : Obj PC) -> (f : IHom PC x y) -> (g : IHom PC y z) -> (h : IHom PC z w) 
+                -> (IArrowEq PC x w ((h . g) . f) (h . (g . f)))
+PCPAssoc c1 c2 plc1 plc2 = (\(x1, x2), (y1, y2), (z1, z2), (w1, w2), (f1, f2), (g1, g2), (h1, h2)  
+                           => (Law_assoc plc1 f1 g1 h1 , Law_assoc plc2 f2 g2 h2))
+
+PCArrEqIsEquiv : (c1, c2 : Category) -> CategoryAx c1 -> CategoryAx c2 -> let PC = ProdCat c1 c2 in 
+                 (x, y : Obj PC) -> IsEquivRel (IHom PC x y) (IArrowEq PC x y)
+PCArrEqIsEquiv c1 c2  plc1 plc2 = (\(x1, x2), (y1, y2) => 
+               let
+                 p1 = Law_arrEqIsEquiv plc1 x1 y1
+                 p2 = Law_arrEqIsEquiv plc2 x2 y2
+               in MkIsEquivRel 
+                 -- Eq_refl  : (f : a) -> f ==== f
+                 (\(f1, f2) => (Eq_refl p1 f1, Eq_refl p2 f2)) 
+                 
+                 -- Eq_sym   : (f, g : a) -> f === g -> g === f  
+                 (\(f1, f2), (g1, g2), (efg1, efg2) 
+                   => (Eq_sym p1 f1 g1 efg1, Eq_sym p2 f2 g2 efg2))  
+                
+                -- Eq_trans : (f, g, h : a) -> f === g -> g === h -> f === g
+                (\(f1, f2), (g1, g2), (h1, h2), (efg1, efg2), (egh1, egh2)
+                   => (Eq_trans p1 f1 g1 h1 efg1 egh1, Eq_trans p2 f2 g2 h2 efg2 egh2)) 
+               )
+
+ProdCatPrf: (c1, c2 : Category) -> CategoryAx c1 ->  CategoryAx c2 -> CategoryAx (ProdCat c1 c2)
+ProdCatPrf c1 c2 plc1 plc2 = 
+  MkCatAx (PCPIdR c1 c2 plc1 plc2 _ _) 
+          (PCPIdL c1 c2 plc1 plc2 _ _) 
+          (PCPAssoc c1 c2 plc1 plc2 _ _ _ _) 
+          (PCArrEqIsEquiv c1 c2  plc1 plc2)
+
