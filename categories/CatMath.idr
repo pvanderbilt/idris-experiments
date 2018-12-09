@@ -57,3 +57,11 @@ FlatEqIsEquiv a = MkIsEquivRel
                      (\f => TheyBEq f f) 
                      (\f,g, p => TheyBEq g f) 
                      (\f,g,h, pfg, pgh => TheyBEq f h)
+
+---+-----------------------------------------------
+---+ Proof that xa=ya & xb=yb implies f xa xb = f ya yb
+---+-----------------------------------------------
+
+ap2 : {a, b, c : Type} -> (f : a -> b -> c) -> {xa, ya : a} -> {xb, yb : b}  
+      -> xa = ya -> xb = yb -> f xa xb = f ya yb
+ap2 f Refl Refl = Refl

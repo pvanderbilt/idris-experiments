@@ -42,16 +42,15 @@ id {c} x = IId c x
 (.) : {c : Category} -> {x, y, z : Obj c} -> IHom c y z -> IHom c x y -> IHom c x z
 (.) {c} {x} {y} {z} g f = IComp c x y z g f
 
-IArrowEq : (c : Category) -> {x, y : Obj c } -> (f, g : IHom c x y) -> Type
-IArrowEq c {x} {y} f g = IArrowEq c x y f g
-
 -- Arrow equality in c: `f === g` means that c has that f and g are the same arrow 
+
 infixr 1 ===
 (===) : {c : Category} -> {x, y : Obj c} -> (f, g : IHom c x y) -> Type
 (===) {c} {x} {y} f g = IArrowEq c x y f g
 
 -- Convenience constructor using parameters corresponding to the accessors
 --  (But I'm not using it.)
+
 MkCategory : 
   (Obj : Type) ->
   (IHom : (x, y : Obj) -> Type) ->
